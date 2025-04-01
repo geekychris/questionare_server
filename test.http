@@ -1,0 +1,10 @@
+###GET
+GET http://localhost:8080/api/campaigns
+
+
+###GET
+GET http://localhost:8080/api/campaigns/1
+
+
+###GET
+GET http://localhost:8080/api/questions/campaign/1
