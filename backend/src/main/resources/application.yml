@@ -14,10 +14,7 @@ spring:
     application:
         name: questionaire
 
-    sql:
-        init:
-            mode: always
-            schema-locations: classpath:/data-mysql.sql
+
 
     # Database configuration
     datasource:
