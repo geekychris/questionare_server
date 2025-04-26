@@ -11,16 +11,21 @@ public class UserResponse {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
+    @JoinColumn(name = "question_id", nullable = false)
     private Question question;
+
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+
+    @Column(name = "text_response")
+    private String textResponse;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "selected_option_id")
     private AnswerOption selectedOption;
 
-    private String textResponse;
-    private LocalDateTime submissionDate;
-    private String userId;
+    @Column(name = "submission_date", nullable = false)
+    private LocalDateTime submissionDate = LocalDateTime.now();
 
     // Getters and Setters
     public Long getId() {
@@ -39,12 +44,12 @@ public class UserResponse {
         this.question = question;
     }
 
-    public AnswerOption getSelectedOption() {
-        return selectedOption;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setSelectedOption(AnswerOption selectedOption) {
-        this.selectedOption = selectedOption;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getTextResponse() {
@@ -55,20 +60,20 @@ public class UserResponse {
         this.textResponse = textResponse;
     }
 
+    public AnswerOption getSelectedOption() {
+        return selectedOption;
+    }
+
+    public void setSelectedOption(AnswerOption selectedOption) {
+        this.selectedOption = selectedOption;
+    }
+
     public LocalDateTime getSubmissionDate() {
         return submissionDate;
     }
 
     public void setSubmissionDate(LocalDateTime submissionDate) {
         this.submissionDate = submissionDate;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 }
 

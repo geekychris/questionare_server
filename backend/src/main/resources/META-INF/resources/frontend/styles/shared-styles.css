@@ -1,0 +1,271 @@
+/* Base Layout */
+:root {
+    --page-max-width: 800px;
+    --content-padding: var(--lumo-space-m);
+}
+
+/* Welcome View */
+.welcome-view {
+    background: var(--lumo-base-color);
+    padding: var(--lumo-space-xl);
+    text-align: center;
+}
+
+.welcome-header {
+    color: var(--lumo-primary-text-color);
+    margin-bottom: var(--lumo-space-l);
+    font-size: var(--lumo-font-size-xxl);
+}
+
+.welcome-description {
+    max-width: 600px;
+    margin: 0 auto var(--lumo-space-xl);
+    color: var(--lumo-secondary-text-color);
+    line-height: 1.6;
+    font-size: var(--lumo-font-size-m);
+}
+
+.welcome-start-button {
+    margin-top: var(--lumo-space-m);
+}
+
+/* Questionnaire View */
+.questionnaire-view {
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    padding: var(--content-padding);
+}
+
+.questionnaire-title {
+    text-align: center;
+    color: var(--lumo-primary-text-color);
+    margin: var(--lumo-space-m) 0;
+    font-size: var(--lumo-font-size-xl);
+}
+
+/* Progress Indicators */
+.progress-bar {
+    padding: var(--lumo-space-s) 0;
+    margin: var(--lumo-space-m) auto;
+    max-width: 400px;
+}
+
+.question-counter {
+    color: var(--lumo-secondary-text-color);
+    font-size: var(--lumo-font-size-s);
+    font-weight: 500;
+}
+
+.progress-percentage {
+    color: var(--lumo-primary-color);
+    font-weight: 600;
+    font-size: var(--lumo-font-size-s);
+}
+
+vaadin-progress-bar {
+    height: 8px;
+    border-radius: var(--lumo-border-radius);
+    --lumo-progress-indeterminate-progress-bar-background: var(--lumo-primary-color-10pct);
+}
+
+/* Question Component */
+.question-component {
+    background: var(--lumo-base-color);
+    border-radius: var(--lumo-border-radius-l);
+    padding: var(--lumo-space-l);
+    box-shadow: var(--lumo-box-shadow-s);
+    margin: var(--lumo-space-m) 0;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid var(--lumo-contrast-10pct);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.question-component:hover {
+    box-shadow: var(--lumo-box-shadow-m);
+    border-color: var(--lumo-contrast-20pct);
+}
+
+.question-text {
+    color: var(--lumo-primary-text-color);
+    font-size: var(--lumo-font-size-l);
+    margin-bottom: var(--lumo-space-m);
+    font-weight: 500;
+}
+
+.required-indicator {
+    color: var(--lumo-error-color);
+    margin-left: var(--lumo-space-xs);
+}
+
+/* Navigation */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--lumo-space-m);
+    margin-top: var(--lumo-space-l);
+    gap: var(--lumo-space-m);
+}
+
+.previous-button {
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.previous-button:hover {
+    opacity: 1;
+}
+
+.next-button {
+    min-width: 100px;
+    transition: all 0.2s ease-in-out;
+}
+
+.next-button:hover {
+    transform: translateX(2px);
+}
+
+/* Form Elements */
+vaadin-text-field,
+vaadin-text-area {
+    width: 100%;
+}
+
+vaadin-radio-group {
+    margin-top: var(--lumo-space-m);
+}
+
+/* Notifications */
+vaadin-notification-card {
+    background: var(--lumo-base-color);
+    border-radius: var(--lumo-border-radius-m);
+    box-shadow: var(--lumo-box-shadow-m);
+}
+
+vaadin-notification-card[theme~="error"] {
+    background: var(--lumo-error-color-10pct);
+    color: var(--lumo-error-text-color);
+    border-left: 3px solid var(--lumo-error-color);
+}
+
+vaadin-notification-card[theme~="success"] {
+    background: var(--lumo-success-color-10pct);
+    color: var(--lumo-success-text-color);
+    border-left: 3px solid var(--lumo-success-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.question-enter {
+    animation: slideInFade 0.3s ease-out;
+}
+
+@keyframes slideInFade {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Accessibility */
+:focus-visible {
+    outline: 2px solid var(--lumo-primary-color-50pct);
+    outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .welcome-view,
+    .questionnaire-view {
+        padding: var(--lumo-space-s);
+    }
+
+    .question-component {
+        padding: var(--lumo-space-m);
+        margin: var(--lumo-space-s) 0;
+    }
+
+    .navigation-buttons {
+        flex-direction: column;
+        gap: var(--lumo-space-s);
+    }
+
+    .navigation-buttons vaadin-button {
+        width: 100%;
+    }
+
+    .welcome-header {
+        font-size: var(--lumo-font-size-xl);
+    }
+
+    .welcome-description {
+        font-size: var(--lumo-font-size-s);
+    }
+
+    .progress-bar {
+        padding: var(--lumo-space-xs) 0;
+        margin: var(--lumo-space-s) auto;
+    }
+
+    .question-counter,
+    .progress-percentage {
+        font-size: var(--lumo-font-size-xs);
+    }
+
+    .questionnaire-title {
+        font-size: var(--lumo-font-size-l);
+        margin: var(--lumo-space-s) 0;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navigation-buttons,
+    .progress-bar {
+        display: none !important;
+    }
+
+    .question-component {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid var(--lumo-contrast-20pct);
+        margin: var(--lumo-space-m) 0;
+        page-break-inside: avoid;
+    }
+
+    .questionnaire-view {
+        padding: 0;
+    }
+
+    .questionnaire-title {
+        text-align: left;
+        margin-bottom: var(--lumo-space-l);
+    }
+
+    .welcome-view {
+        padding: 0;
+    }
+
+    .question-text {
+        font-size: 14px;
+        margin-bottom: var(--lumo-space-s);
+    }
+
+    .required-indicator {
+        display: none;
+    }
+
+    vaadin-text-field,
+    vaadin-text-area,
+    vaadin-radio-group {
+        border: none;
+        padding: 0;
+    }
+}

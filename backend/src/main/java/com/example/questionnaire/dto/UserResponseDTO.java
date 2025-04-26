@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 public class UserResponseDTO {
     private Long id;
     private Long questionId;
-    private Long selectedOptionId;
-    private String textResponse;
-    private LocalDateTime submissionDate;
     private String userId;
+    private String textResponse;
+    private Long selectedOptionId;
+    private LocalDateTime submissionDate;
 
     // Getters and Setters
     public Long getId() {
@@ -27,12 +27,12 @@ public class UserResponseDTO {
         this.questionId = questionId;
     }
 
-    public Long getSelectedOptionId() {
-        return selectedOptionId;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setSelectedOptionId(Long selectedOptionId) {
-        this.selectedOptionId = selectedOptionId;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getTextResponse() {
@@ -43,20 +43,20 @@ public class UserResponseDTO {
         this.textResponse = textResponse;
     }
 
+    public Long getSelectedOptionId() {
+        return selectedOptionId;
+    }
+
+    public void setSelectedOptionId(Long selectedOptionId) {
+        this.selectedOptionId = selectedOptionId;
+    }
+
     public LocalDateTime getSubmissionDate() {
         return submissionDate;
     }
 
     public void setSubmissionDate(LocalDateTime submissionDate) {
         this.submissionDate = submissionDate;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 }
 
