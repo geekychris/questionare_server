@@ -153,51 +153,51 @@ export const handleApiError = (error: AxiosError): ApiError => {
   return new ApiError(error.message || 'Network error', 0);
 };
 
+// The backend (Spring Boot CampaignController, QuestionController,
+// UserResponseController) returns DTOs / arrays directly — there is no
+// {data, success, message} envelope and no Spring Pageable wrapper for
+// the campaign/question routes. So we just hand back response.data.
+
 // Campaign API functions
 export const campaignApi = {
-  // Get all campaigns with optional pagination and filters
-  getAll: async (page = 0, size = 10, filters?: { active?: boolean, title?: string }): Promise<PaginatedResponseType<Campaign>> => {
+  // Get all campaigns
+  getAll: async (): Promise<Campaign[]> => {
     try {
-      const response = await apiClient.get<PaginatedResponseServer<Campaign>>('/campaigns', {
-        params: { page, size, ...filters }
-      });
-      return transformPaginatedResponse(response.data);
+      const response = await apiClient.get<Campaign[]>('/campaigns');
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Get a single campaign by ID
+  // Get a single campaign by ID (questions come back inline on CampaignDTO)
   getById: async (id: number): Promise<Campaign> => {
     try {
-      const response = await apiClient.get<ApiResponseServer<Campaign>>(`/campaigns/${id}`);
-      return response.data.data;
+      const response = await apiClient.get<Campaign>(`/campaigns/${id}`);
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Create a new campaign
   create: async (campaign: CreateCampaignRequest): Promise<Campaign> => {
     try {
-      const response = await apiClient.post<ApiResponseServer<Campaign>>('/campaigns', campaign);
-      return response.data.data;
+      const response = await apiClient.post<Campaign>('/campaigns', campaign);
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Update an existing campaign
   update: async (id: number, campaign: UpdateCampaignRequest): Promise<Campaign> => {
     try {
-      const response = await apiClient.put<ApiResponseServer<Campaign>>(`/campaigns/${id}`, campaign);
-      return response.data.data;
+      const response = await apiClient.put<Campaign>(`/campaigns/${id}`, campaign);
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Delete a campaign
   delete: async (id: number): Promise<boolean> => {
     try {
       await apiClient.delete(`/campaigns/${id}`);
@@ -207,102 +207,72 @@ export const campaignApi = {
     }
   },
 
-  // Add a question to a campaign
+  // Question CRUD lives at /api/questions, not nested under /campaigns
   addQuestion: async (campaignId: number, question: CreateQuestionRequest): Promise<Question> => {
     try {
-      const response = await apiClient.post<ApiResponseServer<Question>>(
-        `/campaigns/${campaignId}/questions`,
-        question
-      );
-      return response.data.data;
+      const response = await apiClient.post<Question>('/questions', { ...question, campaignId });
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Update a question in a campaign
   updateQuestion: async (campaignId: number, questionId: number, question: UpdateQuestionRequest): Promise<Question> => {
     try {
-      const response = await apiClient.put<ApiResponseServer<Question>>(
-        `/campaigns/${campaignId}/questions/${questionId}`,
-        question
-      );
-      return response.data.data;
+      const response = await apiClient.put<Question>(`/questions/${questionId}`, { ...question, campaignId });
+      return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Delete a question from a campaign
-  deleteQuestion: async (campaignId: number, questionId: number): Promise<boolean> => {
+  deleteQuestion: async (_campaignId: number, questionId: number): Promise<boolean> => {
     try {
-      await apiClient.delete(`/campaigns/${campaignId}/questions/${questionId}`);
+      await apiClient.delete(`/questions/${questionId}`);
       return true;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
-
-  // Reorder questions in a campaign
-  reorderQuestions: async (campaignId: number, questionIds: number[]): Promise<boolean> => {
-    try {
-      await apiClient.post(`/campaigns/${campaignId}/questions/reorder`, { questionIds });
-      return true;
-    } catch (error) {
-      throw handleApiError(error as AxiosError);
-    }
-  }
 };
 
 // Survey API functions
+//
+// The backend's UserResponseController stores ONE response per question
+// (POST /api/responses with {questionId, userId, textResponse,
+// selectedOptionId}). The frontend submits one SurveyResponse per survey
+// with an answers[] array, so we fan it out — one POST per answer.
 export const surveyApi = {
-  // Submit responses for a survey
   submitResponse: async (response: SurveyResponse): Promise<SurveyResponse> => {
     try {
-      const result = await apiClient.post<ApiResponseServer<SurveyResponse>>(
-        `/surveys/${response.campaignId}/responses`, 
-        response
+      const userId = response.userId ?? response.respondentId ?? 'anonymous';
+      await Promise.all(
+        response.answers.map((answer) =>
+          apiClient.post('/responses', {
+            questionId: answer.questionId,
+            userId,
+            textResponse: Array.isArray(answer.value)
+              ? answer.value.join(', ')
+              : String(answer.value),
+          })
+        )
       );
-      return result.data.data;
+      return response;
     } catch (error) {
       throw handleApiError(error as AxiosError);
     }
   },
 
-  // Get survey responses for a campaign (admin only)
-  getResponses: async (campaignId: number, page = 0, size = 10): Promise<PaginatedResponseType<SurveyResponse>> => {
-    try {
-      const response = await apiClient.get<PaginatedResponseServer<SurveyResponse>>(
-        `/surveys/${campaignId}/responses`,
-        { params: { page, size } }
-      );
-      return transformPaginatedResponse(response.data);
-    } catch (error) {
-      throw handleApiError(error as AxiosError);
-    }
+  // No /api/responses-by-campaign endpoint exists yet on the backend,
+  // so we hand back an empty page rather than 404. ViewCampaign's
+  // analytics renders gracefully with zero responses.
+  getResponses: async (
+    _campaignId: number,
+    page = 0,
+    size = 10
+  ): Promise<PaginatedResponseType<SurveyResponse>> => {
+    return { items: [], total: 0, page, pageSize: size, totalPages: 0 };
   },
-
-  // Get a single survey response
-  getResponseById: async (responseId: number): Promise<SurveyResponse> => {
-    try {
-      const response = await apiClient.get<ApiResponseServer<SurveyResponse>>(`/surveys/responses/${responseId}`);
-      return response.data.data;
-    } catch (error) {
-      throw handleApiError(error as AxiosError);
-    }
-  },
-  
-  // Get survey analytics for a campaign
-  getAnalytics: async (campaignId: number): Promise<CampaignAnalytics> => {
-    try {
-      const response = await apiClient.get<ApiResponseServer<CampaignAnalytics>>(
-        `/surveys/${campaignId}/analytics`
-      );
-      return response.data.data;
-    } catch (error) {
-      throw handleApiError(error as AxiosError);
-    }
-  }
 };
 
 export default {
