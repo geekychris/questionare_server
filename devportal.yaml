@@ -1,0 +1,68 @@
+apiVersion: devportal.io/v1
+kind: Asset
+metadata:
+  id: questionare-server
+  name: questionare_server
+  description: Full-stack questionnaire application — Spring Boot + Vaadin backend with a React/MUI admin frontend, sharing a REST API.
+  owner: geekychris
+  tags:
+    - infra
+    - spring-boot
+    - vaadin
+    - react
+    - questionnaire
+spec:
+  type: service
+  language: java
+  build:
+    tool: maven
+    commands:
+      install: cd backend && ./mvnw -DskipTests install
+      test: cd backend && ./mvnw test
+      build: cd backend && ./mvnw -DskipTests package
+      package: cd backend && ./mvnw -Pproduction -DskipTests package
+      clean: cd backend && ./mvnw clean
+  docker:
+    enabled: true
+    images:
+      - tag: questionare-server/backend:latest
+        dockerfile: backend/Dockerfile
+        context: backend
+  kubernetes:
+    enabled: true
+    manifestPath: k8s
+    namespace: questionare-server
+  runtime:
+    ports:
+      - name: backend-http
+        protocol: tcp
+        purpose: http
+      - name: frontend-http
+        protocol: tcp
+        purpose: http
+      - name: mysql
+        protocol: tcp
+        purpose: db
+    env:
+      - name: DB_HOST
+        default: mysql
+        description: Host for the MySQL database the backend connects to.
+      - name: DB_PORT
+        default: "3306"
+        description: MySQL port (in-cluster service port, not the NodePort).
+      - name: DB_NAME
+        default: questionare
+        description: MySQL schema name.
+      - name: DB_USERNAME
+        default: questionare
+        description: MySQL user.
+      - name: DB_PASSWORD
+        default: "123456"
+        description: MySQL password (dev default — override in real environments).
+      - name: SERVER_PORT
+        default: "8080"
+        description: Backend Spring Boot listen port (in-pod). External NodePort allocated by devportal.
+  docs:
+    architecture: docs/ARCHITECTURE.md
+    build: docs/BUILD.md
+    run: docs/RUN.md
