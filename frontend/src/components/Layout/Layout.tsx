@@ -6,8 +6,9 @@ import {
   Typography, 
   Drawer, 
   List, 
-  ListItem, 
-  ListItemIcon, 
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
   ListItemText,
   Divider,
   IconButton,
@@ -80,13 +81,11 @@ const Layout: React.FC = () => {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem 
-                button 
-                key={item.text} 
-                onClick={() => handleNavigation(item.path)}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton onClick={() => handleNavigation(item.path)}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>

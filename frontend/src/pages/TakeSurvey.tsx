@@ -65,7 +65,7 @@ const MultipleChoiceQuestion: React.FC<{
         {question.options?.map((option, index) => (
           <Box
             key={index}
-            onClick={() => onChange(option)}
+            onClick={() => onChange(option.text)}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -73,9 +73,9 @@ const MultipleChoiceQuestion: React.FC<{
               border: '1px solid #ccc',
               borderRadius: 1,
               cursor: 'pointer',
-              backgroundColor: value === option ? '#e3f2fd' : 'white',
+              backgroundColor: value === option.text ? '#e3f2fd' : 'white',
               '&:hover': {
-                backgroundColor: value === option ? '#e3f2fd' : '#f5f5f5',
+                backgroundColor: value === option.text ? '#e3f2fd' : '#f5f5f5',
               },
             }}
           >
@@ -91,7 +91,7 @@ const MultipleChoiceQuestion: React.FC<{
                 justifyContent: 'center',
               }}
             >
-              {value === option && (
+              {value === option.text && (
                 <Box
                   sx={{
                     width: 12,
@@ -102,7 +102,7 @@ const MultipleChoiceQuestion: React.FC<{
                 />
               )}
             </Box>
-            <Typography>{option}</Typography>
+            <Typography>{option.text}</Typography>
           </Box>
         ))}
       </Box>
@@ -253,9 +253,9 @@ const TakeSurvey: React.FC = () => {
     // Prepare submission data
     const surveyResponse: SurveyResponse = {
       campaignId: campaign.id,
-      responses: Object.entries(answers).map(([questionId, answer]) => ({
+      answers: Object.entries(answers).map(([questionId, answer]) => ({
         questionId: parseInt(questionId),
-        answer,
+        value: answer,
       })),
       submittedAt: new Date().toISOString(),
     };

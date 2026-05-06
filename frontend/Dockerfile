@@ -3,7 +3,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
-ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV CI=true
 RUN npm run build
 

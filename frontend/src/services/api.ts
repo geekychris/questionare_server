@@ -129,9 +129,10 @@ export class ApiError extends Error {
 export const handleApiError = (error: AxiosError): ApiError => {
   if (error.response) {
     // Try to extract message from different possible response formats
-    const message = 
-      typeof error.response.data === 'object' && error.response.data !== null
-        ? error.response.data.message || error.response.data.error || 'An error occurred'
+    const data = error.response.data as { message?: string; error?: string } | null | undefined;
+    const message =
+      typeof data === 'object' && data !== null
+        ? data.message || data.error || 'An error occurred'
         : 'An error occurred';
         
     return new ApiError(
@@ -304,4 +305,14 @@ export default {
   campaignApi,
   surveyApi
 };
+
+// Named-function aliases so pages can `import { createCampaign }` etc.
+export const createCampaign = campaignApi.create;
+export const getCampaign = campaignApi.getById;
+export const getCampaignById = campaignApi.getById;
+export const updateCampaign = campaignApi.update;
+export const deleteCampaign = campaignApi.delete;
+export const getCampaigns = campaignApi.getAll;
+export const submitSurveyResponse = surveyApi.submitResponse;
+export const getCampaignResponses = surveyApi.getResponses;
 

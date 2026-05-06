@@ -7,7 +7,7 @@ import {
   Divider, 
   FormControl, 
   FormHelperText, 
-  Grid, 
+  GridLegacy as Grid,
   IconButton, 
   InputLabel, 
   MenuItem, 
@@ -18,7 +18,7 @@ import {
   FormControlLabel,
   Checkbox
 } from '@mui/material';
-import { GridTypeMap } from '@mui/material/Grid';
+import { GridLegacyTypeMap as GridTypeMap } from '@mui/material/GridLegacy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Formik, Form, FieldArray, Field, ErrorMessage, FormikHelpers, FormikErrors, FormikTouched } from 'formik';
@@ -34,7 +34,7 @@ interface CampaignFormProps {
 }
 
 // Define FormValues type to match Campaign structure
-interface FormValues extends Campaign {
+interface FormValues extends Omit<Campaign, 'questions'> {
   questions: Array<Omit<Question, 'campaignId'> & { options: string[] }>;
 }
 
@@ -69,11 +69,11 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
         order: Yup.number().required(),
         options: Yup.array().when('type', {
           is: QuestionType.MULTIPLE_CHOICE,
-          then: Yup.array()
+          then: (schema) => schema
             .of(Yup.string().required('Option text is required'))
             .min(2, 'At least 2 options are required')
             .required('Options are required for multiple choice questions'),
-          otherwise: Yup.array().of(Yup.string())
+          otherwise: (schema) => schema.of(Yup.string())
         })
       })
     ).min(1, 'At least one question is required')
@@ -84,7 +84,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
     { setSubmitting, resetForm }: FormikHelpers<FormValues>
   ) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values as unknown as Campaign);
       resetForm();
       navigate('/campaigns');
     } catch (error) {
@@ -94,7 +94,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
     }
   };
 
-  const getNextQuestionOrder = (questions: Question[]): number => {
+  const getNextQuestionOrder = (questions: { order: number }[]): number => {
     if (questions.length === 0) return 1;
     return Math.max(...questions.map(q => q.order)) + 1;
   };
@@ -107,7 +107,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
         </Typography>
         
         <Formik
-          initialValues={initialValues}
+          initialValues={initialValues as unknown as FormValues}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >

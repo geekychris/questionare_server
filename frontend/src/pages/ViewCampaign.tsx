@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
-  Paper, 
-  Grid, 
-  Button, 
+  Paper,
+  GridLegacy as Grid,
+  Button,
   Divider, 
   CircularProgress, 
   Alert, 
@@ -99,16 +99,17 @@ const ViewCampaign: React.FC = () => {
         const campaignData = await getCampaign(parseInt(id));
         setCampaign(campaignData);
         
-        // Fetch campaign responses
-        const responsesData = await getCampaignResponses(parseInt(id));
+        // Fetch campaign responses (paginated — unwrap to the items array)
+        const responsesPage = await getCampaignResponses(parseInt(id));
+        const responsesData = responsesPage.items;
         setResponses(responsesData);
-        
+
         // Calculate statistics
         setResponseCount(responsesData.length);
-        
+
         if (responsesData.length > 0) {
           // Calculate completion rate (complete responses / total responses)
-          const completeResponses = responsesData.filter(r => 
+          const completeResponses = responsesData.filter(r =>
             r.answers && r.answers.length >= campaignData.questions.length
           );
           setCompletionRate((completeResponses.length / responsesData.length) * 100);
@@ -205,7 +206,10 @@ const ViewCampaign: React.FC = () => {
       // Add answers in the order of questions
       campaign.questions.forEach(question => {
         const answer = response.answers?.find(a => a.questionId === question.id);
-        row.push(answer ? answer.value : 'No answer');
+        const cell = answer
+          ? (Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value))
+          : 'No answer';
+        row.push(cell);
       });
       
       return row;
@@ -285,7 +289,7 @@ const ViewCampaign: React.FC = () => {
     if (question.type === QuestionType.MULTIPLE_CHOICE && question.options) {
       // For multiple choice, count responses for each option
       const optionCounts = question.options.reduce((acc, option) => {
-        acc[option] = questionResponses.filter(r => r.value === option).length;
+        acc[option.text] = questionResponses.filter(r => r.value === option.text).length;
         return acc;
       }, {} as Record<string, number>);
       
@@ -446,7 +450,7 @@ const ViewCampaign: React.FC = () => {
                     <Box sx={{ mt: 2 }}>
                       {question.options.map((option, i) => (
                         <Typography key={i} variant="body2" sx={{ mt: 1 }}>
-                          • {option}
+                          {`• ${option.text}`}
                         </Typography>
                       ))}
                     </Box>
@@ -515,14 +519,14 @@ const ViewCampaign: React.FC = () => {
                 {stat.question.type === QuestionType.MULTIPLE_CHOICE && stat.question.options && (
                   <Box sx={{ mt: 2 }}>
                     {stat.question.options.map(option => (
-                      <Box key={option as string} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Box key={option.text} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <Typography variant="body2" sx={{ width: '30%' }}>
-                          {option as string}:
+                          {option.text}:
                         </Typography>
                         <Box sx={{ width: '50%', bgcolor: '#f5f5f5', height: 20, borderRadius: 1 }}>
                           <Box 
                             sx={{ 
-                              width: `${(stat.optionCounts[option as string] / stat.responseCount) * 100}%`, 
+                              width: `${((stat.optionCounts?.[option.text] ?? 0) / stat.responseCount) * 100}%`,
                               bgcolor: 'primary.main', 
                               height: '100%', 
                               borderRadius: 1 
@@ -530,7 +534,7 @@ const ViewCampaign: React.FC = () => {
                           />
                         </Box>
                         <Typography variant="body2" sx={{ ml: 2 }}>
-                          {stat.optionCounts[option as string] || 0} ({stat.responseCount ? ((stat.optionCounts[option as string] || 0) / stat.responseCount * 100).toFixed(1) : 0}%)
+                          {(stat.optionCounts?.[option.text] ?? 0) || 0} ({stat.responseCount ? (((stat.optionCounts?.[option.text] ?? 0) || 0) / stat.responseCount * 100).toFixed(1) : 0}%)
                         </Typography>
                       </Box>
                     ))}

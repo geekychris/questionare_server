@@ -11,11 +11,11 @@ import {
   Tooltip,
   Snackbar
 } from '@mui/material';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridValueGetterParams, 
-  GridToolbar, 
+import {
+  DataGrid,
+  GridColDef,
+  GridRowParams,
+  GridToolbar,
   GridActionsCellItem
 } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
@@ -47,26 +47,26 @@ const CampaignList: React.FC = () => {
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'title', headerName: 'Title', width: 250 },
     { field: 'description', headerName: 'Description', width: 350 },
-    { 
-      field: 'questionCount', 
-      headerName: 'Questions', 
+    {
+      field: 'questionCount',
+      headerName: 'Questions',
       width: 120,
-      valueGetter: (params: GridValueGetterParams) => 
-        params.row.questions ? params.row.questions.length : 0
+      valueGetter: (_value: unknown, row: Campaign) =>
+        row.questions ? row.questions.length : 0
     },
-    { 
-      field: 'createdAt', 
-      headerName: 'Created Date', 
+    {
+      field: 'createdAt',
+      headerName: 'Created Date',
       width: 180,
-      valueGetter: (params: GridValueGetterParams) => 
-        new Date(params.row.createdAt).toLocaleDateString()
+      valueGetter: (_value: unknown, row: Campaign) =>
+        new Date(row.createdAt).toLocaleDateString()
     },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
       width: 150,
-      getActions: (params: GridValueGetterParams) => [
+      getActions: (params: GridRowParams<Campaign>) => [
         <GridActionsCellItem
           icon={<Tooltip title="View"><VisibilityIcon /></Tooltip>}
           label="View"
