@@ -24,10 +24,16 @@ spec:
       clean: cd backend && ./mvnw clean
   docker:
     enabled: true
+    dockerfile: backend/Dockerfile
+    context: backend
+    image: questionare-server/backend:latest
     images:
       - tag: questionare-server/backend:latest
         dockerfile: backend/Dockerfile
         context: backend
+      - tag: questionare-server/frontend:latest
+        dockerfile: frontend/Dockerfile
+        context: frontend
   kubernetes:
     enabled: true
     manifestPath: k8s

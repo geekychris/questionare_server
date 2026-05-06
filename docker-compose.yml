@@ -1,22 +1,47 @@
 version: '3.8'
 
+# Host port mappings allocated by devportal for asset 'questionare-server':
+#   backend-http  -> 18007
+#   frontend-http -> 18008
+#   mysql         -> 18009
+
 services:
+  mysql:
+    image: mysql:8
+    container_name: questionnaire-mysql
+    ports:
+      - "18009:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpw
+      - MYSQL_DATABASE=questionare
+      - MYSQL_USER=questionare
+      - MYSQL_PASSWORD=123456
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uquestionare", "-p123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   backend:
     build: ./backend
     container_name: questionnaire-backend
     ports:
-      - "8080:8080"
+      - "18007:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:h2:mem:questionnaire
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=password
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=questionare
+      - DB_USERNAME=questionare
+      - DB_PASSWORD=123456
+      - VAADIN_PRODUCTIONMODE=false
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
     container_name: questionnaire-frontend
     ports:
-      - "3000:80"
+      - "18008:80"
     depends_on:
       - backend
-
