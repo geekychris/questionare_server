@@ -31,10 +31,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 @Route(value = "questionnaire", layout = MainLayout.class)
 @PageTitle("Questionnaire")
-@CssImport("./styles/questionnaire-view-styles.css")
 public class QuestionnaireView extends VerticalLayout {
     // Component fields
     private H2 title;

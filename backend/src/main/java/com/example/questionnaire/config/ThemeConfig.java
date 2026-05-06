@@ -7,7 +7,7 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
 @Push
-@Theme(value = "lumo", variant = Lumo.LIGHT)
+@Theme(value = "questionnaire", variant = Lumo.LIGHT)
 public class ThemeConfig implements AppShellConfigurator {
     @Override
     public void configurePage(AppShellSettings settings) {

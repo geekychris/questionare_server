@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@CssImport("./styles/question-component-styles.css")
 public class QuestionComponent extends VerticalLayout {
     private H3 questionText;
     private Span requiredIndicator;

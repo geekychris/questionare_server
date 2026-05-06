@@ -1,0 +1,81 @@
+/* Question component specific styles */
+
+.question-component {
+  background-color: var(--lumo-base-color);
+  border-radius: var(--lumo-border-radius);
+  box-shadow: var(--lumo-box-shadow-xs);
+  padding: 1.5em;
+  transition: all 0.3s ease;
+}
+
+.question-text {
+  margin-top: 0;
+  margin-bottom: 1.5em;
+  font-weight: 500;
+  color: var(--lumo-primary-text-color);
+}
+
+.required-indicator {
+  color: var(--lumo-error-color);
+  font-weight: bold;
+}
+
+.answer-field {
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+/* Animation classes */
+.question-exit {
+  animation: fade-out 0.2s ease-out forwards;
+}
+
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--lumo-primary-color);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .question-component {
+    border: 1px solid ButtonText;
+  }
+  
+  .required-indicator {
+    color: LinkText;
+  }
+}
+
+/* Error styling */
+.invalid-field {
+  border-color: var(--lumo-error-color);
+}
+
+.error-message {
+  color: var(--lumo-error-color);
+  font-size: 0.875em;
+  margin-top: 0.25em;
+}
+
+/* Hover effects */
+.question-component:hover {
+  box-shadow: var(--lumo-box-shadow-s);
+}

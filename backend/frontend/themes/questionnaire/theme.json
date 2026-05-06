@@ -1,0 +1,9 @@
+{
+  "lumoImports": ["typography", "color", "spacing", "badge", "utility"],
+  "imports": [
+    "styles.css",
+    "@vaadin/vaadin-lumo-styles/color.js",
+    "@vaadin/vaadin-lumo-styles/typography.js",
+    "@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js"
+  ]
+}

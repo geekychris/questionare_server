@@ -1,0 +1,103 @@
+/* Questionnaire view styles */
+.questionnaire-view {
+  /* Add view styles here */
+}
+
+/* Questionnaire view specific styles */
+.questionnaire-view {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2em;
+}
+
+.questionnaire-title {
+  text-align: center;
+  margin-bottom: 1.5em;
+  color: var(--lumo-primary-color);
+}
+
+.progress-bar {
+  margin: 1em 0 2em;
+}
+
+.question-counter {
+  font-size: 0.9em;
+  color: var(--lumo-secondary-text-color);
+}
+
+.progress-percentage {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--lumo-primary-color);
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2em;
+}
+
+.previous-button {
+  margin-right: 1em;
+}
+
+.next-button {
+  margin-left: auto;
+}
+
+/* Animation classes */
+.question-enter {
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Media queries for responsive design */
+@media (max-width: 600px) {
+  .questionnaire-view {
+    padding: 1em;
+  }
+  
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 1em;
+  }
+  
+  .next-button, .previous-button {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+/* Accessibility styles */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--lumo-primary-color);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Reduce animations if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .question-enter {
+    animation: none;
+  }
+}
+

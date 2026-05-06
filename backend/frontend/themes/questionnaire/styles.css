@@ -1,0 +1,54 @@
+/* Base theme styles */
+:root {
+  /* Define theme variables here */
+}
+
+/* Main theme styles */
+html {
+  /* Primary colors */
+  --lumo-primary-color: #1E88E5;
+  --lumo-primary-text-color: #1E88E5;
+  --lumo-primary-color-50pct: rgba(30, 136, 229, 0.5);
+  --lumo-primary-color-10pct: rgba(30, 136, 229, 0.1);
+  
+  /* Error colors */
+  --lumo-error-color: #e53935;
+  --lumo-error-color-50pct: rgba(229, 57, 53, 0.5);
+  --lumo-error-color-10pct: rgba(229, 57, 53, 0.1);
+  
+  /* Shades */
+  --lumo-shade-5pct: rgba(33, 33, 33, 0.05);
+  --lumo-shade-10pct: rgba(33, 33, 33, 0.1);
+  --lumo-shade-20pct: rgba(33, 33, 33, 0.2);
+  --lumo-shade-30pct: rgba(33, 33, 33, 0.3);
+  --lumo-shade-40pct: rgba(33, 33, 33, 0.4);
+  
+  /* Layout */
+  --lumo-border-radius-m: 4px;
+  --lumo-space-m: 1.5em;
+  
+  /* Typography */
+  --lumo-font-family: 'Roboto', 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+body {
+  line-height: 1.6;
+  font-family: var(--lumo-font-family);
+  background-color: #f5f5f5;
+  margin: 0;
+}
+
+/* Global transition settings */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Accessibility focus outlines */
+:focus {
+  outline: 2px solid var(--lumo-primary-color-50pct);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lumo-primary-color);
+  outline-offset: 2px;
+}
