@@ -2,13 +2,12 @@ import React from 'react';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
-
-// Placeholder components - will be replaced with actual components
-const CampaignList = () => <div>Campaign List Page</div>;
-const CampaignCreate = () => <div>Create Campaign Page</div>;
-const CampaignEdit = () => <div>Edit Campaign Page</div>;
-const CampaignPreview = () => <div>Campaign Preview Page</div>;
-const SurveyForm = () => <div>Take Survey Page</div>;
+import CampaignList from './components/Campaigns/CampaignList';
+import CreateCampaign from './pages/CreateCampaign';
+import EditCampaign from './pages/EditCampaign';
+import ViewCampaign from './pages/ViewCampaign';
+import TakeSurvey from './pages/TakeSurvey';
+import NotFound from './pages/NotFound';
 
 // Define Material-UI theme
 const theme = createTheme({
@@ -62,15 +61,17 @@ function App() {
           <Route path="/" element={<Layout />}>
             {/* Campaign management routes */}
             <Route index element={<CampaignList />} />
-            <Route path="campaigns/create" element={<CampaignCreate />} />
-            <Route path="campaigns/edit/:id" element={<CampaignEdit />} />
-            <Route path="campaigns/preview/:id" element={<CampaignPreview />} />
-            
+            <Route path="campaigns/new" element={<CreateCampaign />} />
+            <Route path="campaigns/create" element={<Navigate to="/campaigns/new" replace />} />
+            <Route path="campaigns/:id/edit" element={<EditCampaign />} />
+            <Route path="campaigns/:id/preview" element={<ViewCampaign />} />
+            <Route path="campaigns/:id" element={<ViewCampaign />} />
+
             {/* Take survey route */}
-            <Route path="survey/:id" element={<SurveyForm />} />
-            
-            {/* Redirect unknown paths to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="survey/:id" element={<TakeSurvey />} />
+
+            {/* 404 for everything else */}
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>

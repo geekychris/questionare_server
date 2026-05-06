@@ -13,7 +13,11 @@ import {
   CampaignAnalytics
 } from '../types';
 // Base API configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:18007/api';
+// Default to a relative URL so nginx (k8s/docker-compose) can proxy /api/ to
+// the backend service on the same origin. For `npm start` dev mode, the
+// `proxy` field in package.json forwards to the local backend on 18007.
+// Override REACT_APP_API_URL at build time if you need to point elsewhere.
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({

@@ -39,7 +39,7 @@ const Layout: React.FC = () => {
 
   const menuItems = [
     { text: 'Campaigns', icon: <DashboardIcon />, path: '/' },
-    { text: 'Create Campaign', icon: <AddIcon />, path: '/campaigns/create' },
+    { text: 'Create Campaign', icon: <AddIcon />, path: '/campaigns/new' },
     { text: 'Take Survey', icon: <AssignmentIcon />, path: '/survey/1' }, // Example with ID 1
   ];
 

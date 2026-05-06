@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
-ENV CI=true
+ENV DISABLE_ESLINT_PLUGIN=true
 RUN npm run build
 
 FROM nginx:1.27-alpine
