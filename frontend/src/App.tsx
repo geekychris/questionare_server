@@ -61,6 +61,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             {/* Campaign management routes */}
             <Route index element={<CampaignList />} />
+            <Route path="campaigns" element={<CampaignList />} />
             <Route path="campaigns/new" element={<CreateCampaign />} />
             <Route path="campaigns/create" element={<Navigate to="/campaigns/new" replace />} />
             <Route path="campaigns/:id/edit" element={<EditCampaign />} />
