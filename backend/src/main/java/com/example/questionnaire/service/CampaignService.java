@@ -111,7 +111,12 @@ public class CampaignService {
         for (QuestionDTO questionDTO : questions) {
             Question question = new Question();
             question.setCampaign(campaign);
-            question.setId(questionDTO.getId());
+            // Only set the id when the client supplied a real one; id == 0
+            // (or null) means "new entity" — leaving the id null tells
+            // Hibernate to assign one rather than treating it as detached.
+            if (questionDTO.getId() != null && questionDTO.getId() > 0) {
+                question.setId(questionDTO.getId());
+            }
             question.setText(questionDTO.getText());
             question.setType(questionDTO.getType());
             question.setOrderIndex(questionDTO.getOrderIndex());
