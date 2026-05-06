@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Button, 
-  Card, 
-  CardContent, 
-  Divider, 
-  FormControl, 
-  FormHelperText, 
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  FormControl,
+  FormHelperText,
   GridLegacy as Grid,
-  IconButton, 
-  InputLabel, 
-  MenuItem, 
-  Paper, 
-  Select, 
-  TextField, 
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
   Typography,
   FormControlLabel,
   Checkbox
@@ -58,9 +59,14 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
+  // Title is the only hard requirement — campaigns can start with no
+  // description and zero questions and have those filled in later via
+  // edit. A non-empty question (when the user does add one) still has
+  // to have its text filled in, and a multiple-choice question still
+  // needs at least two options.
   const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
-    description: Yup.string().required('Description is required'),
+    description: Yup.string(),
     questions: Yup.array().of(
       Yup.object().shape({
         text: Yup.string().required('Question text is required'),
@@ -76,7 +82,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
           otherwise: (schema) => schema.of(Yup.string())
         })
       })
-    ).min(1, 'At least one question is required')
+    )
   });
 
   const handleSubmit = async (
@@ -111,7 +117,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }: {
+          {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, submitCount, isValid }: {
             values: FormValues;
             errors: FormikErrors<FormValues>;
             touched: FormikTouched<FormValues>;
@@ -119,6 +125,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
             handleBlur: any;
             isSubmitting: boolean;
             setFieldValue: (field: string, value: any) => void;
+            submitCount: number;
+            isValid: boolean;
           }) => (
             <Form>
               <Grid container spacing={3} component="div">
@@ -375,6 +383,15 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
               
               <Divider sx={{ my: 3 }} />
               
+              {submitCount > 0 && !isValid && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Please fix the highlighted fields before submitting.
+                  {Object.keys(errors).length > 0 && (
+                    <> Missing or invalid: {Object.keys(errors).join(', ')}.</>
+                  )}
+                </Alert>
+              )}
+
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
