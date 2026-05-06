@@ -68,6 +68,9 @@ spec:
       - name: SERVER_PORT
         default: "8080"
         description: Backend Spring Boot listen port (in-pod). External NodePort allocated by devportal.
+    proxy:
+      path: /questionare-server
+      portSlot: backend-http
   docs:
     architecture: docs/ARCHITECTURE.md
     build: docs/BUILD.md
