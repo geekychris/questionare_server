@@ -69,8 +69,8 @@ spec:
         default: "8080"
         description: Backend Spring Boot listen port (in-pod). External NodePort allocated by devportal.
     proxy:
-      path: /questionare-server
-      portSlot: backend-http
+      portSlot: frontend-http
+      host: questionare.hitorro.com
   docs:
     architecture: docs/ARCHITECTURE.md
     build: docs/BUILD.md
