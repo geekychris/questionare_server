@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Questionare Server logo" width="180">
+</p>
+
 # Questionnaire Application
 
 A full-stack application for creating and managing questionnaire campaigns. Users can create campaigns, add questions, and collect responses through a user-friendly interface.
