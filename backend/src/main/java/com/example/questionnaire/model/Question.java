@@ -23,6 +23,7 @@ public class Question {
     private Campaign campaign;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
     private List<AnswerOption> options = new ArrayList<>();
 
     // Getters and Setters

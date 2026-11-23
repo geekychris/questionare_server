@@ -1,23 +1,46 @@
+# Test configuration (shadows src/main/resources/application.yml). H2, a dummy OIDC provider
+# (no network is touched: the client registration is built without discovery).
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
+    password: ""
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    open-in-view: false
     defer-datasource-initialization: true
   sql:
     init:
       mode: always
       schema-locations: classpath:/data-h2.sql
 
+app:
+  public-url: https://survey.example.test
+  auth:
+    dev-login: false
+  oidc:
+    issuer: https://auth.example.test
+    backchannel-url: https://auth.example.test:8443
+    client-id: questionnaire
+    client-secret: test-only-not-a-secret
+
+server:
+  forward-headers-strategy: framework
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+vaadin:
+  launch-browser: false
+
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.example.questionnaire: DEBUG
-

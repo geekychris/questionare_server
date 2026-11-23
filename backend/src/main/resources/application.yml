@@ -1,42 +1,54 @@
-# H2 Database Configuration
-#spring.datasource.url=jdbc:h2:mem:questionnaire
-#spring.datasource.driverClassName=org.h2.Driver
-#spring.datasource.username=sa
-#spring.datasource.password=password
-#spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-#spring.h2.console.enabled=true
-#
-## JPA Configuration
-#spring.jpa.hibernate.ddl-auto=update
-#spring.jpa.show-sql=true
+# Deployed configuration (default profile). Required env: DB_PASSWORD, OIDC_ISSUER,
+# OIDC_CLIENT_ID, OIDC_CLIENT_SECRET; the app refuses to start without them.
+# Local development without MySQL or the provider: SPRING_PROFILES_ACTIVE=dev (see README).
 
 spring:
-    application:
-        name: questionaire
+  application:
+    name: questionnaire
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:questionare}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:questionare}
+    # No default on purpose: the password comes from the environment (k8s Secret / .env).
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: ${SHOW_SQL:false}
 
+app:
+  # Public base URL used in share links (e.g. https://survey.hitorro.com); empty = relative /r/<token>.
+  public-url: ${APP_PUBLIC_URL:}
+  # Comma-separated origins allowed to call /api with credentials (local SPA development only).
+  cors-origins: ${APP_CORS_ORIGINS:}
+  auth:
+    dev-login: false
+  oidc:
+    issuer: ${OIDC_ISSUER:}
+    backchannel-url: ${OIDC_BACKCHANNEL_URL:}
+    client-id: ${OIDC_CLIENT_ID:questionnaire}
+    client-secret: ${OIDC_CLIENT_SECRET:}
 
-
-    # Database configuration
-    datasource:
-        url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:questionare}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-        username: ${DB_USERNAME:questionare}
-        password: ${DB_PASSWORD:123456}
-        driver-class-name: com.mysql.cj.jdbc.Driver
-
-# JPA configuration
-    jpa:
-        hibernate:
-            ddl-auto: update
-        properties:
-            hibernate:
-                dialect: org.hibernate.dialect.MySQLDialect
-   #             format_sql: true
-        show-sql: ${SHOW_SQL:false}
-   #     defer-datasource-initialization: true
-
-# Server Configuration
 server:
-    port: 8080
+  port: ${SERVER_PORT:8080}
+  # The cloud-stack proxy sends X-Forwarded-Host (with any :port) and X-Forwarded-Proto=https.
+  forward-headers-strategy: framework
+  error:
+    include-message: always
+  servlet:
+    session:
+      cookie:
+        same-site: lax
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
 
-
+vaadin:
+  launch-browser: false

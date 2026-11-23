@@ -4,165 +4,125 @@
 
 # Questionnaire Application
 
-A full-stack application for creating and managing questionnaire campaigns. Users can create campaigns, add questions, and collect responses through a user-friendly interface.
+Create survey campaigns (multiple-choice and free-text questions), share them
+with a link, and read the results.
 
-## Features
+- **Admin UI** (Vaadin, served by the backend at `/`): for users with the
+  `admin` or `creator` role, signed in with OpenID Connect.
+- **Respondents** need no account: each campaign has an unguessable share link
+  `/r/<token>`; a campaign can optionally require sign-in. See
+  [docs/RESPONDENTS.md](docs/RESPONDENTS.md).
+- **JSON API** under `/api` for the same operations (session + CSRF token).
 
-- Create and manage questionnaire campaigns
-- Support for multiple-choice and text questions
-- User-friendly survey interface
-- Real-time feedback notifications
-- Secure API endpoints
-- Responsive Material-UI design
+The backend (`backend/`) is the whole deployed app: Java 17+, Spring Boot 3.5,
+Spring Security OAuth2 client, Spring Data JPA, Vaadin 24.9, MySQL (H2 for
+tests and the dev profile). `frontend/` holds an older React/MUI SPA over the
+same API; it is **not deployed** and is unmaintained (its "take survey" page
+used an endpoint that no longer exists — respondents use `/r/<token>`).
 
-## Technology Stack
+## Authentication
 
-### Backend
-- Java 17
-- Spring Boot 3.x
-- Spring Data JPA
-- Spring Security
-- H2 Database (can be configured for other databases)
-- Maven for dependency management
+Sign-in is OIDC against the site's cloud-stack provider (authorization code +
+PKCE S256, Spring registration id `cloudstack`, scopes `openid profile email`).
+The client is built from environment variables (no discovery at startup):
 
-### Frontend
-- React 18
-- Material-UI v7
-- React Router v7
-- Axios for API communication
-- Context API for state management
+| Variable | | |
+|---|---|---|
+| `OIDC_ISSUER` | required | e.g. `https://auth.hitorro.com`; browser-facing endpoints (`/oidc/authorize`, `/oidc/end_session`) and the expected `iss` |
+| `OIDC_BACKCHANNEL_URL` | default: the issuer | base for token and JWKS calls from the server (e.g. `https://auth.hitorro.com:8443`) |
+| `OIDC_CLIENT_ID` | default `questionnaire` | |
+| `OIDC_CLIENT_SECRET` | required | |
+| `APP_PUBLIC_URL` | optional | base of the share links, e.g. `https://survey.hitorro.com` (else relative) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `DB_PASSWORD` required | MySQL |
+| `APP_CORS_ORIGINS` | optional | exact origins allowed to call `/api` cross-origin (SPA development only; default none) |
 
-## Prerequisites
+Outside the `dev` profile the app refuses to start without `OIDC_ISSUER`,
+`OIDC_CLIENT_SECRET` and `DB_PASSWORD`.
 
-- Java Development Kit (JDK) 17 or later
-- Node.js 16 or later
-- npm or yarn package manager
-- Docker and Docker Compose (for containerized deployment)
+Behind the proxy: `server.forward-headers-strategy=framework`, so redirect URIs
+use the public name from `X-Forwarded-Host`/`-Proto`. When the request came in
+on an explicit non-443 https port (Belmont's LAN path `survey.hitorro.com:8443`),
+the authorization and end-session URLs get the same port. Sign-out is local plus
+RP-initiated logout (`/oidc/end_session`, back to `{baseUrl}/`).
+`X-Cloudstack-User`/`-Roles` headers are ignored.
 
-## Project Structure
+**Roles** (the ID token's `roles` claim, falling back to `groups`; unknown names ignored):
+
+| Role | Can |
+|---|---|
+| `admin` | everything: all campaigns, delete, results, `/api/responses` |
+| `creator` | create campaigns; edit, close/reopen, rotate the link of and read results of **their own** campaigns (no delete) |
+| `respondent` | only answer campaigns that require sign-in |
+
+A login with none of these roles is refused (403 page).
+
+**Endpoint rules:** `/actuator/health` (and `/readiness`, `/liveness`) public;
+`/r/**` public, with the controller enforcing token state and `requireLogin`;
+`/api/me`, `/api/csrf` any signed-in user; `DELETE /api/campaigns/*` and
+`/api/responses/**` admin; other `/api/**` and the admin UI admin or creator;
+everything else needs a session. Browsers without a session are redirected to
+`/oauth2/authorization/cloudstack`; `/api/**` answers 401.
+
+**CSRF** is on. Vaadin handles its own; JSON clients get the token from
+`GET /api/csrf` (`{headerName, token}`) and send it as `X-CSRF-TOKEN`. The
+respondent submit is exempt and uses a JSON-content-type + custom-header check
+instead (docs/RESPONDENTS.md).
+
+## API (signed in)
 
 ```
-questionnaire-app/
-├── backend/                 # Spring Boot application
-│   ├── src/
-│   └── pom.xml
-└── frontend/               # React application
-    ├── src/
-    ├── public/
-    └── package.json
+GET    /api/me                               {username, roles}
+GET    /api/csrf                             {headerName, token}
+GET    /api/campaigns                        admin: all; creator: own
+POST   /api/campaigns                        {title, description, active, requireLogin, startDate, endDate, questions:[{text, type: MULTIPLE_CHOICE|TEXT, required, orderIndex, options:[{text, orderIndex}]}]}
+GET    /api/campaigns/{id}
+PUT    /api/campaigns/{id}                   campaign fields only
+PUT    /api/campaigns/{id}/questions         replace all questions (409 once answered)
+DELETE /api/campaigns/{id}                   admin
+GET    /api/campaigns/{id}/share             {token, url, open, requireLogin}
+POST   /api/campaigns/{id}/share/rotate|close|open
+GET    /api/campaigns/{id}/results           counts per option, free-text answers
 ```
 
-## Local Development Setup
+Campaign JSON includes `shareToken`, `shareUrl`, `acceptingResponses`,
+`ownerName` and `responseCount`. Respondent endpoints: docs/RESPONDENTS.md.
 
-### Backend Setup
+## Local development
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
+Without MySQL or an OIDC provider, use the `dev` profile (H2 in memory, a local
+form login with users `admin`, `creator` and `respondent`):
 
-2. Build the application:
-   ```bash
-   ./mvnw clean install
-   ```
-
-3. Run the application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-The backend will start on http://localhost:8080
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-The frontend will start on http://localhost:3000
-
-## Docker Deployment
-
-The application can be run using Docker containers. To build and run the application:
-
-1. Build the containers:
-   ```bash
-   docker-compose build
-   ```
-
-2. Start the services:
-   ```bash
-   docker-compose up -d
-   ```
-
-The application will be available at http://localhost:3000
-
-To stop the services:
-```bash
-docker-compose down
-```
-
-## API Documentation
-
-The backend provides the following main endpoints:
-
-### Campaigns
-- GET /api/campaigns - List all campaigns
-- POST /api/campaigns - Create a new campaign
-- GET /api/campaigns/{id} - Get campaign details
-- PUT /api/campaigns/{id} - Update a campaign
-- DELETE /api/campaigns/{id} - Delete a campaign
-
-### Questions
-- GET /api/campaigns/{id}/questions - List questions for a campaign
-- POST /api/campaigns/{id}/questions - Add a question
-- PUT /api/campaigns/{id}/questions/{questionId} - Update a question
-- DELETE /api/campaigns/{id}/questions/{questionId} - Delete a question
-
-### Responses
-- POST /api/campaigns/{id}/responses/questions/{questionId} - Submit a response
-- GET /api/campaigns/{id}/responses/users/{userId} - Get user's responses
-
-## Security
-
-The application implements basic authentication for admin endpoints. In production, configure appropriate security measures and update the CORS settings in `WebConfig.java`.
-
-## Building for Production
-
-### Backend
 ```bash
 cd backend
-./mvnw clean package -DskipTests
+SPRING_PROFILES_ACTIVE=dev DEV_PASSWORD=<pick one> ./mvnw spring-boot:run
+# or without DEV_PASSWORD: a random password is printed at startup
 ```
 
-### Frontend
+Open http://localhost:8080/ . The dev login is for local use only.
+
+Against a real provider: set the variables above (and a MySQL), e.g. with
+docker compose: copy `.env.example` to `.env` (gitignored), fill it in, then
+`docker compose up --build`. The provider must have
+`http://localhost:18007/login/oauth2/code/cloudstack` as a redirect URI.
+
+## Tests and builds
+
 ```bash
-cd frontend
-npm run build
+cd backend
+./mvnw test                                  # H2, a dummy provider (no network)
+./mvnw -Pproduction -DskipTests package      # jar with the Vaadin production bundle (fetches Node)
 ```
 
-The frontend build will be created in the `frontend/build` directory, ready for deployment.
+Vaadin is pinned to 24.9.18: later Vaadin 24 patches need a commercial license
+to build in production mode. The free path forward is Vaadin 25 with Spring Boot 4.
 
-## Contributing
+## Deployment
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a pull request
+In Chris's lab the app is deployed by cloud-stack (`deploy/questionnaire/`),
+which builds from `main`, runs MySQL, registers the OIDC client and creates the
+Secrets. `k8s/` and `docker-compose.yml` here are generic examples; neither
+contains credentials (Secrets / `.env`).
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-

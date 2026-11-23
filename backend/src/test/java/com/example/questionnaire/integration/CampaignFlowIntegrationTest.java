@@ -7,6 +7,7 @@ import com.example.questionnaire.dto.UserResponseDTO;
 import com.example.questionnaire.repository.CampaignRepository;
 import com.example.questionnaire.repository.QuestionRepository;
 import com.example.questionnaire.repository.UserResponseRepository;
+import com.example.questionnaire.security.CurrentUser;
 import com.example.questionnaire.service.CampaignService;
 import com.example.questionnaire.service.UserResponseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,8 +23,10 @@ import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -126,14 +129,14 @@ public class CampaignFlowIntegrationTest {
         
         // Verify API endpoints
         // Get the campaign via API
-        mockMvc.perform(get("/api/campaigns/" + campaignId))
+        mockMvc.perform(get("/api/campaigns/" + campaignId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(campaignId))
                 .andExpect(jsonPath("$.title").value("Test Campaign"))
                 .andExpect(jsonPath("$.questions.length()").value(2));
 
         // Verify user responses via API
-        mockMvc.perform(get("/api/responses/user/" + testUserId))
+        mockMvc.perform(get("/api/responses/user/" + testUserId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2));
@@ -195,7 +198,12 @@ public class CampaignFlowIntegrationTest {
         campaignDTO.setQuestions(questions);
         List<QuestionDTO> q= campaignDTO.getQuestions();
         // Save the campaign using the service
-        return campaignService.createCampaign(campaignDTO);
+        return campaignService.createCampaign(campaignDTO, new CurrentUser("pau_admin", "admin", List.of("admin")));
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor admin() {
+        return oidcLogin().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                .idToken(t -> t.subject("pau_admin").claim("preferred_username", "admin"));
     }
 }
 

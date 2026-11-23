@@ -1,0 +1,17 @@
+# Local development without MySQL or the OIDC provider:
+#   SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+# Users admin / creator / respondent; password from DEV_PASSWORD or a random one printed at startup.
+spring:
+  datasource:
+    url: jdbc:h2:mem:questionnaire;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  auth:
+    dev-login: true
+    dev-password: ${DEV_PASSWORD:}
