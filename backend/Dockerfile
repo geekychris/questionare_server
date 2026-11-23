@@ -1,31 +1,15 @@
-# Stage 1: Build the application
-FROM maven:3.9-eclipse-temurin-17 AS builder
-
-# Set working directory
+# Builds the app with the Vaadin production bundle (-Pproduction).
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
-
-# Copy pom.xml first to leverage Docker cache
 COPY pom.xml .
-
-# Copy source code
 COPY src ./src
+COPY frontend ./frontend
+RUN mvn -B -Pproduction -DskipTests package
 
-# Build the application
-RUN mvn clean package -DskipTests
-
-# Stage 2: Create the runtime image
-FROM eclipse-temurin:17-jre
-
-# Set working directory
+FROM eclipse-temurin:21-jre
+RUN useradd -u 1001 -m appuser
 WORKDIR /app
-
-# Copy the built JAR from the builder stage
-# Assumes the JAR is in the target directory with the pattern *-SNAPSHOT.jar
-COPY --from=builder /app/target/*.jar app.jar
-
-# Expose the port the app runs on
+COPY --from=builder --chown=1001:1001 /app/target/questionnaire-*.jar app.jar
+USER 1001
 EXPOSE 8080
-
-# Command to run the application
-CMD ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

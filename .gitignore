@@ -28,7 +28,8 @@ backend/src/main/bundles/
 frontend/build/
 frontend/coverage/
 
-# Env
+# Env (copy .env.example)
+.env
 .env.local
 .env.*.local
 

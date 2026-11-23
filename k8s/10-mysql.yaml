@@ -1,15 +1,9 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-credentials
-  namespace: questionare-server
-type: Opaque
-stringData:
-  MYSQL_ROOT_PASSWORD: rootpw
-  MYSQL_DATABASE: questionare
-  MYSQL_USER: questionare
-  MYSQL_PASSWORD: "123456"
----
+# The credentials are the Secret mysql-credentials, which is NOT in git. Create it once:
+#   kubectl -n questionare-server create secret generic mysql-credentials \
+#     --from-literal=MYSQL_DATABASE=questionare --from-literal=MYSQL_USER=questionare \
+#     --from-literal=MYSQL_PASSWORD="$(openssl rand -hex 24)" \
+#     --from-literal=MYSQL_ROOT_PASSWORD="$(openssl rand -hex 24)"
+# (cloud-stack's deploy/questionnaire does the equivalent for the lab deployment.)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,7 +21,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:8
+          image: mysql:8.4
           ports:
             - containerPort: 3306
               name: mysql
@@ -39,7 +33,7 @@ spec:
               command:
                 - sh
                 - -c
-                - mysqladmin ping -h 127.0.0.1 -u$MYSQL_USER -p$MYSQL_PASSWORD
+                - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" --silent
             initialDelaySeconds: 10
             periodSeconds: 5
           volumeMounts:
@@ -55,12 +49,11 @@ metadata:
   name: mysql
   namespace: questionare-server
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: mysql
   ports:
     - name: mysql
       port: 3306
       targetPort: 3306
-      nodePort: 30007
       protocol: TCP

@@ -1,0 +1,15 @@
+:root { color-scheme: light dark; --fg: #1d2330; --bg: #f6f7f9; --card: #fff; --muted: #5b6475; --accent: #1f6feb; }
+@media (prefers-color-scheme: dark) { :root { --fg: #e6e9ef; --bg: #14171c; --card: #1d2128; --muted: #9aa3b2; --accent: #4c8dff; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
+main { max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
+h1 { font-size: 1.6rem; margin: 0 0 .5rem; }
+.description { color: var(--muted); }
+fieldset.question { background: var(--card); border: 1px solid rgba(127,127,127,.25); border-radius: 8px; margin: 1rem 0; padding: 1rem; }
+legend { font-weight: 600; padding: 0 .25rem; }
+.req { color: #d1242f; }
+label.option { display: block; padding: .25rem 0; cursor: pointer; }
+textarea { width: 100%; font: inherit; padding: .5rem; border-radius: 6px; border: 1px solid rgba(127,127,127,.4); background: var(--bg); color: var(--fg); }
+button { font: inherit; padding: .6rem 1.4rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+.status { color: var(--muted); min-height: 1.5em; }

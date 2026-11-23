@@ -17,7 +17,7 @@ public class UserResponse {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "text_response")
+    @Column(name = "text_response", length = 2000)
     private String textResponse;
 
     @ManyToOne(fetch = FetchType.LAZY)

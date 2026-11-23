@@ -6,9 +6,12 @@ import com.example.questionnaire.model.Question;
 import com.example.questionnaire.model.AnswerOption;
 import com.example.questionnaire.model.Campaign;
 import com.example.questionnaire.repository.QuestionRepository;
-import com.example.questionnaire.repository.CampaignRepository;
+import com.example.questionnaire.repository.UserResponseRepository;
+import com.example.questionnaire.security.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -20,19 +23,33 @@ public class QuestionService {
     private QuestionRepository questionRepository;
 
     @Autowired
-    private CampaignRepository campaignRepository;
+    private CampaignService campaignService;
+
+    @Autowired
+    private UserResponseRepository responseRepository;
+
+    /** Loads a question whose campaign the user may manage, else 404. */
+    private Question loadQuestion(Long id, CurrentUser user) {
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
+        campaignService.load(question.getCampaign().getId(), user);
+        return question;
+    }
 
     @Transactional(readOnly = true)
-    public List<QuestionDTO> getQuestionsByCampaign(Long campaignId) {
+    public List<QuestionDTO> getQuestionsByCampaign(Long campaignId, CurrentUser user) {
+        campaignService.load(campaignId, user);
         return questionRepository.findByCampaignIdOrderByOrderIndexAsc(campaignId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public QuestionDTO createQuestion(QuestionDTO questionDTO) {
-        Campaign campaign = campaignRepository.findById(questionDTO.getCampaignId())
-                .orElseThrow(() -> new RuntimeException("Campaign not found"));
+    public QuestionDTO createQuestion(QuestionDTO questionDTO, CurrentUser user) {
+        if (questionDTO.getCampaignId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "campaignId is required");
+        }
+        Campaign campaign = campaignService.load(questionDTO.getCampaignId(), user);
 
         Question question = convertToEntity(questionDTO);
         question.setCampaign(campaign);
@@ -41,9 +58,8 @@ public class QuestionService {
     }
 
     @Transactional
-    public QuestionDTO updateQuestion(Long id, QuestionDTO questionDTO) {
-        Question question = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+    public QuestionDTO updateQuestion(Long id, QuestionDTO questionDTO, CurrentUser user) {
+        Question question = loadQuestion(id, user);
         
         question.setText(questionDTO.getText());
         question.setType(questionDTO.getType());
@@ -55,9 +71,8 @@ public class QuestionService {
     }
 
     @Transactional
-    public AnswerOptionDTO addAnswerOption(Long questionId, AnswerOptionDTO optionDTO) {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+    public AnswerOptionDTO addAnswerOption(Long questionId, AnswerOptionDTO optionDTO, CurrentUser user) {
+        Question question = loadQuestion(questionId, user);
 
         AnswerOption option = new AnswerOption();
         option.setText(optionDTO.getText());
@@ -71,8 +86,11 @@ public class QuestionService {
     }
 
     @Transactional
-    public void deleteQuestion(Long id) {
-        questionRepository.deleteById(id);
+    public void deleteQuestion(Long id, CurrentUser user) {
+        Question question = loadQuestion(id, user);
+        responseRepository.deleteByQuestionId(question.getId());
+        question.getCampaign().getQuestions().remove(question);
+        questionRepository.delete(question);
     }
 
     private QuestionDTO convertToDTO(Question question) {
