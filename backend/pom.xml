@@ -57,6 +57,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
+        <!-- Emailing a campaign's share link (mail/InviteService): Jakarta Mail through
+             Spring's JavaMailSenderImpl. Configured by app.mail.* (QUESTIONNAIRE_MAIL_*),
+             not spring.mail.*, so any password is read from a file per send. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
         
         <dependency>
             <groupId>com.h2database</groupId>

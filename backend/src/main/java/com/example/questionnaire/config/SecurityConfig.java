@@ -52,7 +52,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
  *       site's cloud-stack provider (registrationId {@code cloudstack}); roles from the {@code roles} claim.</li>
  *   <li>Respondent surface {@code /r/**}: public; the controller enforces per-campaign
  *       {@code requireLogin} and token state.</li>
- *   <li>{@code /actuator/health}: public for probes.</li>
+ *   <li>{@code /actuator/health} and {@code GET /api/mail/status} ({@code {enabled}}): public for probes.</li>
  * </ul>
  * Browsers without a session are redirected to {@code /oauth2/authorization/cloudstack};
  * {@code /api/**} and the respondent JSON calls answer 401 instead.
@@ -96,6 +96,8 @@ public class SecurityConfig extends VaadinWebSecurity {
                 .requestMatchers(antMatcher("/actuator/health"), antMatcher("/actuator/health/**")).permitAll()
                 .requestMatchers(antMatcher("/r/**")).permitAll()
                 .requestMatchers(antMatcher("/error")).permitAll()
+                // Only {enabled}: lets probes and the deploy's smoke test see whether invites can be emailed.
+                .requestMatchers(antMatcher(HttpMethod.GET, "/api/mail/status")).permitAll()
                 .requestMatchers(antMatcher("/actuator/**")).denyAll()
                 .requestMatchers(antMatcher("/api/me"), antMatcher("/api/csrf")).authenticated()
                 .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/campaigns/*")).hasRole("ADMIN")

@@ -23,6 +23,17 @@ app:
   cors-origins: ${APP_CORS_ORIGINS:}
   auth:
     dev-login: false
+  # Emailing a campaign's share link (README "Emailing invites"). Off unless a host is set.
+  # The password, when an account is used, is read from password-file for each send.
+  mail:
+    host: ${QUESTIONNAIRE_MAIL_HOST:}
+    port: ${QUESTIONNAIRE_MAIL_PORT:0}
+    tls: ${QUESTIONNAIRE_MAIL_TLS:starttls}
+    username: ${QUESTIONNAIRE_MAIL_USERNAME:}
+    from: ${QUESTIONNAIRE_MAIL_FROM:}
+    from-name: ${QUESTIONNAIRE_MAIL_FROM_NAME:Surveys}
+    reply-to: ${QUESTIONNAIRE_MAIL_REPLY_TO:}
+    password-file: ${QUESTIONNAIRE_MAIL_PASSWORD_FILE:/var/run/questionnaire/smtp/password}
   oidc:
     issuer: ${OIDC_ISSUER:}
     backchannel-url: ${OIDC_BACKCHANNEL_URL:}
