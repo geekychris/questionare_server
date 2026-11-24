@@ -82,10 +82,37 @@ DELETE /api/campaigns/{id}                   admin
 GET    /api/campaigns/{id}/share             {token, url, open, requireLogin}
 POST   /api/campaigns/{id}/share/rotate|close|open
 GET    /api/campaigns/{id}/results           counts per option, free-text answers
+GET    /api/mail/status                      {enabled}
+POST   /api/campaigns/{id}/invites           {to: [addresses] or "a@x, b@y", note?} -> {results:[{to, sent, error}], sent, notSent}
 ```
 
 Campaign JSON includes `shareToken`, `shareUrl`, `acceptingResponses`,
 `ownerName` and `responseCount`. Respondent endpoints: docs/RESPONDENTS.md.
+
+## Emailing invites
+
+On the campaign list, the envelope next to an open campaign's share link emails
+that link to the addresses you paste (one per line or comma separated), each
+person in their own message, with an optional note. The result for every
+address is shown; the ones that didn't go stay in the box. The button only
+appears when mail is configured.
+
+Only an admin, or the creator who owns the campaign, can send. The message is
+fixed text (who invites, the title, the note, the link, when it closes); the
+title is reduced to one line for the subject, and the app logs the recipient,
+never the link. Limits: 50 addresses a request, 50 emails an hour, 3 to one
+address an hour (in memory, per instance).
+
+| Setting (env) | Default | |
+|---|---|---|
+| `QUESTIONNAIRE_MAIL_HOST` | empty (mail off) | e.g. `smtp-relay.gmail.com` |
+| `QUESTIONNAIRE_MAIL_PORT` | from TLS (587 / 465 / 25) | |
+| `QUESTIONNAIRE_MAIL_TLS` | `starttls` | STARTTLS required and the certificate checked; `tls`; `none` only for a test catcher without an account |
+| `QUESTIONNAIRE_MAIL_USERNAME` | empty (no sign-in) | a relay that accepts the site's address needs none |
+| `QUESTIONNAIRE_MAIL_FROM` | the account | |
+| `QUESTIONNAIRE_MAIL_FROM_NAME` | `Surveys` | |
+| `QUESTIONNAIRE_MAIL_REPLY_TO` | empty | |
+| `QUESTIONNAIRE_MAIL_PASSWORD_FILE` | `/var/run/questionnaire/smtp/password` | read for each send, only with an account |
 
 ## Local development
 

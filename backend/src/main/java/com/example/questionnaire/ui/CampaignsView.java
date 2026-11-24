@@ -1,6 +1,8 @@
 package com.example.questionnaire.ui;
 
 import com.example.questionnaire.dto.CampaignDTO;
+import com.example.questionnaire.mail.InviteService;
+import com.example.questionnaire.mail.MailService;
 import com.example.questionnaire.security.CurrentUser;
 import com.example.questionnaire.service.CampaignService;
 import com.vaadin.flow.component.UI;
@@ -19,18 +21,22 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 
-/** Campaign list: share link (copy/rotate/close), edit, results, delete (admin only). */
+/** Campaign list: share link (copy/rotate/close, email when mail is set up), edit, results, delete (admin only). */
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Campaigns | Questionnaire")
 @RolesAllowed({"ADMIN", "CREATOR"})
 public class CampaignsView extends VerticalLayout {
 
     private final CampaignService service;
+    private final InviteService invites;
+    private final MailService mail;
     private final CurrentUser user;
     private final Grid<CampaignDTO> grid = new Grid<>(CampaignDTO.class, false);
 
-    public CampaignsView(CampaignService service) {
+    public CampaignsView(CampaignService service, InviteService invites, MailService mail) {
         this.service = service;
+        this.invites = invites;
+        this.mail = mail;
         this.user = CurrentUser.current();
         setSizeFull();
 
@@ -76,6 +82,14 @@ public class CampaignsView extends VerticalLayout {
         rotate.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
         rotate.setTooltipText("Rotate link (new token)");
         HorizontalLayout h = new HorizontalLayout(link, copy, rotate);
+        if (mail.isEnabled() && c.isAcceptingResponses()) {
+            Button email = new Button(VaadinIcon.ENVELOPE_O.create(), e -> new InviteDialog(
+                    c, invites, user, mail.properties().getMaxRecipients()).open());
+            email.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+            email.setTooltipText("Email the link");
+            email.setAriaLabel("Email the link");
+            h.add(email);
+        }
         h.setAlignItems(Alignment.CENTER);
         return h;
     }
