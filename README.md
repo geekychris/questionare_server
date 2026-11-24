@@ -82,7 +82,7 @@ DELETE /api/campaigns/{id}                   admin
 GET    /api/campaigns/{id}/share             {token, url, open, requireLogin}
 POST   /api/campaigns/{id}/share/rotate|close|open
 GET    /api/campaigns/{id}/results           counts per option, free-text answers
-GET    /api/mail/status                      {enabled}
+GET    /api/mail/status                      {enabled} (public: only says whether mail is configured)
 POST   /api/campaigns/{id}/invites           {to: [addresses] or "a@x, b@y", note?} -> {results:[{to, sent, error}], sent, notSent}
 ```
 

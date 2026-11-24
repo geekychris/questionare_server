@@ -107,7 +107,7 @@ class InviteApiTest {
     @Test
     void ownerEmailsTheLinkToEachAddress() throws Exception {
         long id = create(CREATOR);
-        mvc.perform(get("/api/mail/status").with(CREATOR)).andExpect(jsonPath("$.enabled").value(true));
+        mvc.perform(get("/api/mail/status")).andExpect(status().isOk()).andExpect(jsonPath("$.enabled").value(true));
 
         MvcResult r = invite(CREATOR, id, """
                 {"to":"sam@example.com, not-an-address\\nSAM@example.com\\nkim@example.com","note":"Please answer by Friday."}""", 200);
