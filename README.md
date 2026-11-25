@@ -151,6 +151,70 @@ address an hour (in memory, per instance).
 | `QUESTIONNAIRE_MAIL_REPLY_TO` | empty | |
 | `QUESTIONNAIRE_MAIL_PASSWORD_FILE` | `/var/run/questionnaire/smtp/password` | read for each send, only with an account |
 
+## Webhooks
+
+A campaign can notify another system when someone answers: give it a **webhook URL** and each
+response is POSTed there as signed JSON (for example to a FaaS function's route, which can then
+email, file a ticket, or update a sheet). It is optional and per campaign.
+
+**Setting it.** The owner or an admin, in the campaign editor's **Webhook** section (with
+**Send test** and the recent deliveries), or through the API:
+
+| | |
+|---|---|
+| `GET /api/campaigns/{id}/webhook` | `{enabled, allowedHosts, url, events, knownEvents, deliveries}` (last 20) |
+| `PUT /api/campaigns/{id}/webhook` | `{"url": "...", "events": ["response.created", "campaign.closed"]}`; `url` `""` removes it |
+| `POST /api/campaigns/{id}/webhook/test` | queue a `ping` delivery |
+| `POST /api/campaigns` / `PUT /api/campaigns/{id}` | also take `webhookUrl` and `webhookEvents` (on update, a missing `webhookUrl` leaves it alone) |
+
+Events: `response.created` (default) and `campaign.closed` (the survey stops accepting responses);
+`ping` comes only from **Send test**.
+
+**What is sent.** `POST <url>` with `Content-Type: application/json` and:
+
+| header | |
+|---|---|
+| `X-Questionnaire-Event` | the event |
+| `X-Questionnaire-Delivery` | a UUID per delivery (the same on every retry) |
+| `Idempotency-Key` | the same UUID, so a FaaS route runs a retried delivery once |
+| `X-Questionnaire-Signature` | `sha256=<hex HMAC-SHA256 of the raw body>` with the site's `WEBHOOK_SECRET` |
+
+```json
+{"event": "response.created", "deliveryId": "6f1c…",
+ "campaign": {"id": 6, "title": "FaaS survey test", "link": "https://survey.hitorro.com/r/…"},
+ "response": {"id": 41, "submittedAt": "2026-11-24T22:10:03Z",
+   "respondent": null,
+   "answers": [{"questionId": 12, "question": "Did this arrive?", "type": "choice", "value": "Yes", "optionId": 30},
+               {"questionId": 13, "question": "Comments", "type": "text", "value": "…"}]}}
+```
+
+`respondent` is `{name, email}` only when the campaign requires sign-in; anonymous responses
+stay anonymous. `campaign.closed` and `ping` carry `event`, `deliveryId` and `campaign` (ping adds
+`message`).
+
+**Delivery.** Responses are queued after they are stored and sent by a background thread every
+couple of seconds, so a respondent is never slowed or failed by a webhook. A 2xx is success;
+anything else (or no answer within 10 s) is retried after 10 s, 1 min, 5 min and 30 min, then
+marked failed (5 tries, `app.webhooks.max-attempts`). Redirects are not followed. Every delivery
+is recorded (status, tries, last HTTP code and error) and shown on the campaign page. The queue is
+in the database, so restarts don't lose deliveries; it assumes one replica.
+
+**Verifying.** Compute HMAC-SHA256 of the exact body bytes with the shared secret, hex-encode,
+prefix `sha256=`, and compare in constant time with `X-Questionnaire-Signature`. A FaaS
+http trigger does this itself when its config has `"verify": "<webhook connection>"` (faas
+`docs/CONNECTORS.md`, "webhook"). Signatures carry no timestamp, so dedupe on the delivery id if
+replays matter.
+
+**Site settings (off unless both are set):**
+
+| Variable | |
+|---|---|
+| `WEBHOOK_ALLOWED_HOSTS` | hosts a webhook may name, comma-separated: exact (`192.168.1.177`) or a leading-dot suffix (`.hitorro.com`, subdomains only) |
+| `WEBHOOK_SECRET` | the HMAC key |
+
+The allowlist is the guard against a creator pointing the server at internal addresses: only the
+URL's host name is checked, not what it resolves to, so list names you control (or IPs).
+
 ## Local development
 
 Without MySQL or an OIDC provider, use the `dev` profile (H2 in memory, a local

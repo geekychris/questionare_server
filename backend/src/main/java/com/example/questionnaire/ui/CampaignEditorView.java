@@ -5,6 +5,7 @@ import com.example.questionnaire.dto.CampaignDTO;
 import com.example.questionnaire.dto.QuestionDTO;
 import com.example.questionnaire.security.CurrentUser;
 import com.example.questionnaire.service.CampaignService;
+import com.example.questionnaire.webhook.WebhookService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -43,6 +44,7 @@ import java.util.List;
 public class CampaignEditorView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final CampaignService service;
+    private final WebhookService webhooks;
     private final CurrentUser user;
 
     private final TextField title = new TextField("Title");
@@ -55,8 +57,9 @@ public class CampaignEditorView extends VerticalLayout implements HasUrlParamete
     private Long id;
     private boolean questionsLocked;
 
-    public CampaignEditorView(CampaignService service) {
+    public CampaignEditorView(CampaignService service, WebhookService webhooks) {
         this.service = service;
+        this.webhooks = webhooks;
         this.user = CurrentUser.current();
         setMaxWidth("60rem");
         title.setWidthFull();
@@ -104,6 +107,9 @@ public class CampaignEditorView extends VerticalLayout implements HasUrlParamete
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button cancel = new Button("Cancel", e -> UI.getCurrent().navigate(CampaignsView.class));
         add(new HorizontalLayout(save, cancel));
+        if (parameter != null) {
+            add(new WebhookPanel(webhooks, user, parameter));
+        }
     }
 
     private void addQuestion(QuestionDTO q) {

@@ -36,6 +36,11 @@ app:
     from-name: ${QUESTIONNAIRE_MAIL_FROM_NAME:Surveys}
     reply-to: ${QUESTIONNAIRE_MAIL_REPLY_TO:}
     password-file: ${QUESTIONNAIRE_MAIL_PASSWORD_FILE:/var/run/questionnaire/smtp/password}
+  # Campaign webhooks (README "Webhooks"): off unless both are set. allowed-hosts: exact hosts or
+  # leading-dot suffixes, comma-separated; secret signs X-Questionnaire-Signature.
+  webhooks:
+    allowed-hosts: ${WEBHOOK_ALLOWED_HOSTS:}
+    secret: ${WEBHOOK_SECRET:}
   oidc:
     issuer: ${OIDC_ISSUER:}
     backchannel-url: ${OIDC_BACKCHANNEL_URL:}
