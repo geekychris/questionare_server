@@ -11,7 +11,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 
-/** Header with the app name, the signed-in user and a sign-out button (local + RP-initiated logout). */
+/** Header with the app name, links to campaigns and recipient lists, the signed-in user and a sign-out button (local + RP-initiated logout). */
 public class MainLayout extends AppLayout {
 
     public MainLayout(AuthenticationContext authenticationContext) {
@@ -27,7 +27,9 @@ public class MainLayout extends AppLayout {
         Button logout = new Button("Sign out", e -> authenticationContext.logout());
         logout.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        HorizontalLayout header = new HorizontalLayout(home, who, logout);
+        RouterLink campaigns = new RouterLink("Campaigns", CampaignsView.class);
+        RouterLink lists = new RouterLink("Recipient lists", RecipientListsView.class);
+        HorizontalLayout header = new HorizontalLayout(home, campaigns, lists, who, logout);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.expand(who);
         header.setWidthFull();

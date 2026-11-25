@@ -65,6 +65,12 @@ public class InviteService {
      * @param origin     scheme://host for a share link that is still relative (no APP_PUBLIC_URL)
      */
     public List<Result> invite(Long campaignId, List<String> addresses, String note, CurrentUser user, String origin) {
+        return invite(campaignId, addresses, note, user, origin, null);
+    }
+
+    /** As above; {@code inviterName}, when set, replaces the sender's name in the message. */
+    public List<Result> invite(Long campaignId, List<String> addresses, String note, CurrentUser user, String origin,
+                               String inviterName) {
         String reason = mail.unavailableReason();
         if (reason != null) {
             throw new MailException(MailException.Kind.NOT_CONFIGURED, "email isn't configured: " + reason);
@@ -87,7 +93,7 @@ public class InviteService {
             throw new MailException(MailException.Kind.NOT_CONFIGURED, "the survey's public address isn't known");
         }
         String subject = "Survey: " + oneLine(c.getTitle(), 150);
-        String text = body(user, c, cleanNote, link);
+        String text = body(inviterName != null ? inviterName : user.name(), c, cleanNote, link);
 
         List<Result> out = new ArrayList<>();
         for (String a : addresses) {
@@ -130,9 +136,9 @@ public class InviteService {
         return shareUrl;
     }
 
-    private static String body(CurrentUser user, CampaignDTO c, String note, String link) {
+    private static String body(String inviter, CampaignDTO c, String note, String link) {
         StringBuilder b = new StringBuilder();
-        b.append(oneLine(user.name(), 80)).append(" invited you to answer a survey: ")
+        b.append(oneLine(inviter, 80)).append(" invited you to answer a survey: ")
                 .append(oneLine(c.getTitle(), 200)).append(".\n\n");
         if (!note.isEmpty()) {
             b.append(note).append("\n\n");

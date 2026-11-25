@@ -68,7 +68,7 @@ everything else needs a session. Browsers without a session are redirected to
 respondent submit is exempt and uses a JSON-content-type + custom-header check
 instead (docs/RESPONDENTS.md).
 
-## API (signed in)
+## API (signed in, or with an API token)
 
 ```
 GET    /api/me                               {username, roles}
@@ -83,11 +83,48 @@ GET    /api/campaigns/{id}/share             {token, url, open, requireLogin}
 POST   /api/campaigns/{id}/share/rotate|close|open
 GET    /api/campaigns/{id}/results           counts per option, free-text answers
 GET    /api/mail/status                      {enabled} (public: only says whether mail is configured)
-POST   /api/campaigns/{id}/invites           {to: [addresses] or "a@x, b@y", note?} -> {results:[{to, sent, error}], sent, notSent}
+POST   /api/campaigns/{id}/invites           {to?: [addresses] or "a@x, b@y", listIds?: [ids], note?, from?} -> {results:[{to, sent, error}], sent, notSent}
+GET    /api/recipient-lists                  [{id, name, ownerName, size, updatedAt}]  admin: all; creator: own
+POST   /api/recipient-lists                  {name, members?} -> {id, name, ownerName, members:[{email, name}], createdAt, updatedAt}
+GET    /api/recipient-lists/{id}
+PUT    /api/recipient-lists/{id}             {name?, members?}  rename and/or replace the members
+DELETE /api/recipient-lists/{id}
+POST   /api/recipient-lists/{id}/members     {members}  add
+DELETE /api/recipient-lists/{id}/members     {members}  remove (by address, ignoring case)
 ```
+
+Members are strings (`"sam@example.com"` or `"Sam Lee <sam@example.com>"`) or
+objects `{email, name}`.
 
 Campaign JSON includes `shareToken`, `shareUrl`, `acceptingResponses`,
 `ownerName` and `responseCount`. Respondent endpoints: docs/RESPONDENTS.md.
+
+### API tokens
+
+For programs (the site's FaaS functions, scripts), `API_TOKENS` holds
+`label=token` pairs separated by commas (each token at least 24 characters;
+empty = off). A request to `/api/**` with `Authorization: Bearer <token>` acts
+as the service principal `api:<label>` with the **creator** role: it owns the
+campaigns and lists it creates (admins see them too), cannot delete campaigns
+or read `/api/responses`, and never reaches the admin UI. Nothing is kept in a
+session, and only requests a token actually authenticated skip the CSRF check;
+a missing or unknown token is handled exactly as before (401 or CSRF 403).
+Only SHA-256 hashes of the tokens are kept in memory, compared in constant
+time. An invite sent with a token may set `from`, the inviter's name in the
+email (people signing in are always named as themselves).
+
+The cloud-stack deploy generates one token per site (label `faas`) and gives
+it to the site's FaaS server as the `survey` connection.
+
+## Recipient lists
+
+**Recipient lists** (header link) are named address lists, owned like
+campaigns: a creator sees and edits their own, an admin all. Paste one address
+per line (`name@example.com` or `Sam Lee <sam@example.com>`); addresses are
+checked, duplicates dropped ignoring case, at most 1,000 a list, and names are
+unique per owner. Pick lists in a campaign's "Email the link" dialog, or send
+`listIds` to the invite API: the addresses of all lists and `to` are merged and
+each gets one email (the per-request limit below applies to the merged total).
 
 ## Emailing invites
 

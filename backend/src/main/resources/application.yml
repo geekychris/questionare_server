@@ -23,6 +23,8 @@ app:
   cors-origins: ${APP_CORS_ORIGINS:}
   auth:
     dev-login: false
+  # Machine access to /api (README "API tokens"): label=token pairs, comma-separated. Empty = off.
+  api-tokens: ${API_TOKENS:}
   # Emailing a campaign's share link (README "Emailing invites"). Off unless a host is set.
   # The password, when an account is used, is read from password-file for each send.
   mail:

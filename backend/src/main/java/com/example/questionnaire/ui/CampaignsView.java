@@ -1,6 +1,7 @@
 package com.example.questionnaire.ui;
 
 import com.example.questionnaire.dto.CampaignDTO;
+import com.example.questionnaire.lists.RecipientListService;
 import com.example.questionnaire.mail.InviteService;
 import com.example.questionnaire.mail.MailService;
 import com.example.questionnaire.security.CurrentUser;
@@ -30,11 +31,13 @@ public class CampaignsView extends VerticalLayout {
     private final CampaignService service;
     private final InviteService invites;
     private final MailService mail;
+    private final RecipientListService lists;
     private final CurrentUser user;
     private final Grid<CampaignDTO> grid = new Grid<>(CampaignDTO.class, false);
 
-    public CampaignsView(CampaignService service, InviteService invites, MailService mail) {
+    public CampaignsView(CampaignService service, InviteService invites, MailService mail, RecipientListService lists) {
         this.service = service;
+        this.lists = lists;
         this.invites = invites;
         this.mail = mail;
         this.user = CurrentUser.current();
@@ -84,7 +87,7 @@ public class CampaignsView extends VerticalLayout {
         HorizontalLayout h = new HorizontalLayout(link, copy, rotate);
         if (mail.isEnabled() && c.isAcceptingResponses()) {
             Button email = new Button(VaadinIcon.ENVELOPE_O.create(), e -> new InviteDialog(
-                    c, invites, user, mail.properties().getMaxRecipients()).open());
+                    c, invites, lists, user, mail.properties().getMaxRecipients()).open());
             email.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
             email.setTooltipText("Email the link");
             email.setAriaLabel("Email the link");
