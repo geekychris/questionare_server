@@ -227,6 +227,20 @@ class WebhookApiTest {
     }
 
     @Test
+    void largePayloadIsQueued() throws Exception {
+        long id = create(bearer(), "\"webhookUrl\":\"" + hookUrl() + "\"");
+        JsonNode c = body(mvc.perform(get("/api/campaigns/" + id).with(bearer())).andReturn());
+        JsonNode q = c.get("questions");
+        String text = "x".repeat(1900);
+        mvc.perform(post("/r/" + c.get("shareToken").asText() + "/responses").header("X-Respondent", "1").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"answers\":[{\"questionId\":" + q.get(0).get("id") + ",\"optionId\":" + q.get(0).get("options").get(0).get("id")
+                        + "},{\"questionId\":" + q.get(1).get("id") + ",\"text\":\"" + text + "\"}]}")).andExpect(status().isCreated());
+        List<Received> got = await(() -> RECEIVED, l -> !l.isEmpty());
+        assertThat(got).hasSize(1);
+        assertThat(got.get(0).body()).contains(text);
+    }
+
+    @Test
     void signedInRespondentIsIncludedOnlyWhenLoginIsRequired() throws Exception {
         long id = create(bearer(), "\"requireLogin\":true,\"webhookUrl\":\"" + hookUrl() + "\"");
         answer(id, RESPONDENT);

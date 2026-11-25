@@ -27,9 +27,12 @@ public class WebhookDelivery {
     @Column(nullable = false, length = 512)
     private String url;
 
-    /** The exact body that is signed and sent. */
+    /**
+     * The exact body that is signed and sent. The length makes it MEDIUMTEXT on MySQL (an
+     * unsized @Lob is TINYTEXT, 255 bytes); {@link WebhookSchemaFix} widens tables made before.
+     */
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = WebhookSchemaFix.PAYLOAD_LENGTH)
     private String payload;
 
     @Enumerated(EnumType.STRING)
