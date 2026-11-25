@@ -1,5 +1,7 @@
 package com.example.questionnaire.config;
 
+import com.example.questionnaire.security.ApiTokenFilter;
+import com.example.questionnaire.security.ApiTokens;
 import com.example.questionnaire.security.CloudstackOidcUserService;
 import com.example.questionnaire.security.OidcSettings;
 import com.example.questionnaire.security.PortFollowingAuthorizationRequestResolver;
@@ -33,6 +35,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -63,6 +66,10 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
  * neither can be sent cross-site without a CORS preflight, and no CORS is allowed.
  * JSON API clients fetch the token from {@code GET /api/csrf} and send it as {@code X-CSRF-TOKEN}.
  * <p>
+ * Machines: {@code Authorization: Bearer <token>} on {@code /api/**}, for a token in {@code API_TOKENS}
+ * ({@link ApiTokenFilter}), acts as {@code api:<label>} with the creator role, for that request only.
+ * Only requests the filter actually authenticated skip CSRF (they carry no cookies).
+ * <p>
  * The {@code dev} profile ({@code app.auth.dev-login=true}) replaces OIDC with a local form login.
  */
 @EnableWebSecurity
@@ -81,13 +88,16 @@ public class SecurityConfig extends VaadinWebSecurity {
     private final OidcSettings oidc;
     private final ObjectProvider<ClientRegistrationRepository> registrations;
     private final boolean devLogin;
+    private final ApiTokens apiTokens;
 
     public SecurityConfig(OidcSettings oidc,
                           ObjectProvider<ClientRegistrationRepository> registrations,
-                          @Value("${app.auth.dev-login:false}") boolean devLogin) {
+                          @Value("${app.auth.dev-login:false}") boolean devLogin,
+                          ApiTokens apiTokens) {
         this.oidc = oidc;
         this.registrations = registrations;
         this.devLogin = devLogin;
+        this.apiTokens = apiTokens;
     }
 
     @Override
@@ -113,7 +123,10 @@ public class SecurityConfig extends VaadinWebSecurity {
                 .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), API_REQUESTS)
                 .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint(loginUrl), AnyRequestMatcher.INSTANCE));
 
-        http.csrf(c -> c.ignoringRequestMatchers(antMatcher(HttpMethod.POST, "/r/*/responses")));
+        http.addFilterBefore(new ApiTokenFilter(apiTokens), CsrfFilter.class);
+        http.csrf(c -> c.ignoringRequestMatchers(
+                antMatcher(HttpMethod.POST, "/r/*/responses"),
+                request -> Boolean.TRUE.equals(request.getAttribute(ApiTokenFilter.ATTRIBUTE))));
 
         http.headers(h -> h.frameOptions(f -> f.sameOrigin()));
 
