@@ -2,6 +2,7 @@ package com.example.questionnaire.respondent;
 
 import com.example.questionnaire.model.Campaign;
 import com.example.questionnaire.security.CurrentUser;
+import com.example.questionnaire.webhook.WebhookService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -14,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,10 +54,12 @@ public class RespondentController {
 
     private final RespondentService service;
     private final ObjectMapper json;
+    private final WebhookService webhooks;
 
-    public RespondentController(RespondentService service, ObjectMapper json) {
+    public RespondentController(RespondentService service, ObjectMapper json, WebhookService webhooks) {
         this.service = service;
         this.json = json;
+        this.webhooks = webhooks;
     }
 
     @GetMapping(value = "/r/{token}", produces = MediaType.TEXT_HTML_VALUE)
@@ -136,6 +140,11 @@ public class RespondentController {
             respondentId = "anon:" + UUID.randomUUID();
         }
         service.submit(token, submission, respondentId);
+        // Committed: queue the campaign's webhook (if any). Sending happens on another thread, and
+        // a failure here is logged, never shown to the respondent.
+        Map<String, Object> respondent = c.isRequireLogin() ? respondentInfo(auth) : null;
+        WebhookService.safely("response for campaign " + c.getId(),
+                () -> webhooks.responseRecorded(c.getId(), respondentId, respondent));
         if (!c.isRequireLogin()) {
             Cookie done = new Cookie(DONE_COOKIE, "1");
             done.setPath("/r/" + token);
@@ -163,6 +172,15 @@ public class RespondentController {
         return ResponseEntity.ok().contentType(type)
                 .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePublic())
                 .body(body);
+    }
+
+    /** Who answered a requireLogin campaign, for its webhook: {id, name, email}. */
+    private static Map<String, Object> respondentInfo(Authentication auth) {
+        Map<String, Object> m = new java.util.LinkedHashMap<>();
+        CurrentUser u = CurrentUser.from(auth);
+        m.put("name", u == null ? null : u.name());
+        m.put("email", auth != null && auth.getPrincipal() instanceof OidcUser o ? o.getEmail() : null);
+        return m;
     }
 
     /** Anonymous access to a requireLogin campaign starts the login (page) or answers 401 (JSON). */

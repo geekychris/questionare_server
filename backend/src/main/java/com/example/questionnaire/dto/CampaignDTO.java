@@ -23,6 +23,28 @@ public class CampaignDTO {
     /** Read-only: number of submissions. */
     private long responseCount;
     private List<QuestionDTO> questions = new ArrayList<>();
+    /**
+     * Optional webhook (README "Webhooks"). On update, null leaves it unchanged and "" removes it.
+     */
+    private String webhookUrl;
+    /** Events for the webhook (response.created, campaign.closed); null = unchanged / default. */
+    private List<String> webhookEvents;
+
+    public String getWebhookUrl() {
+        return webhookUrl;
+    }
+
+    public void setWebhookUrl(String webhookUrl) {
+        this.webhookUrl = webhookUrl;
+    }
+
+    public List<String> getWebhookEvents() {
+        return webhookEvents;
+    }
+
+    public void setWebhookEvents(List<String> webhookEvents) {
+        this.webhookEvents = webhookEvents;
+    }
 
     // Getters and Setters
     public Long getId() {

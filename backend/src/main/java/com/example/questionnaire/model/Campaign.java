@@ -46,6 +46,17 @@ public class Campaign {
     @Column(name = "owner_name", length = 128)
     private String ownerName;
 
+    /**
+     * Optional "on response" webhook (README "Webhooks"): where to POST signed event JSON.
+     * Must match the site's WEBHOOK_ALLOWED_HOSTS; null = none.
+     */
+    @Column(name = "webhook_url", length = 512)
+    private String webhookUrl;
+
+    /** Comma-separated events the webhook gets; null = response.created only. */
+    @Column(name = "webhook_events", length = 128)
+    private String webhookEvents;
+
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     private List<Question> questions = new ArrayList<>();
@@ -129,6 +140,22 @@ public class Campaign {
 
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
+    }
+
+    public String getWebhookUrl() {
+        return webhookUrl;
+    }
+
+    public void setWebhookUrl(String webhookUrl) {
+        this.webhookUrl = webhookUrl;
+    }
+
+    public String getWebhookEvents() {
+        return webhookEvents;
+    }
+
+    public void setWebhookEvents(String webhookEvents) {
+        this.webhookEvents = webhookEvents;
     }
 
     /** Whether the share link currently accepts responses. */

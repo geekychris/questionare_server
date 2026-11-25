@@ -12,7 +12,11 @@ import com.example.questionnaire.repository.CampaignRepository;
 import com.example.questionnaire.repository.UserResponseRepository;
 import com.example.questionnaire.security.CurrentUser;
 import com.example.questionnaire.security.ShareTokens;
+import com.example.questionnaire.webhook.WebhookDeliveryRepository;
+import com.example.questionnaire.webhook.WebhookProperties;
+import com.example.questionnaire.webhook.WebhookService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,18 +45,30 @@ public class CampaignService {
     private final CampaignRepository campaignRepository;
     private final UserResponseRepository responseRepository;
     private final String publicUrl;
+    private final WebhookProperties webhookProps;
+    private final WebhookDeliveryRepository webhookDeliveries;
+    private final ApplicationEventPublisher events;
 
     public CampaignService(CampaignRepository campaignRepository,
                            UserResponseRepository responseRepository,
-                           @Value("${app.public-url:}") String publicUrl) {
+                           @Value("${app.public-url:}") String publicUrl,
+                           WebhookProperties webhookProps,
+                           WebhookDeliveryRepository webhookDeliveries,
+                           ApplicationEventPublisher events) {
+        this.events = events;
         this.campaignRepository = campaignRepository;
         this.responseRepository = responseRepository;
+        this.webhookProps = webhookProps;
+        this.webhookDeliveries = webhookDeliveries;
         String p = publicUrl == null ? "" : publicUrl.trim();
         while (p.endsWith("/")) {
             p = p.substring(0, p.length() - 1);
         }
         this.publicUrl = p;
     }
+
+    /** Published when a campaign stops accepting responses; webhooks act on it after commit. */
+    public record CampaignClosed(Long campaignId) {}
 
     @Transactional(readOnly = true)
     public List<CampaignDTO> getAllCampaigns(CurrentUser user) {
@@ -76,6 +92,9 @@ public class CampaignService {
         campaign.setOwnerSub(user.id());
         campaign.setOwnerName(user.name());
         campaign.setShareToken(ShareTokens.generate());
+        if (StringUtils.hasText(dto.getWebhookUrl())) {
+            WebhookService.apply(webhookProps, campaign, dto.getWebhookUrl(), dto.getWebhookEvents());
+        }
         campaign = campaignRepository.save(campaign);
         return convertToDTO(campaign);
     }
@@ -85,12 +104,16 @@ public class CampaignService {
     public CampaignDTO updateCampaign(Long id, CampaignDTO dto, CurrentUser user) {
         Campaign campaign = load(id, user);
         validateScalars(dto);
+        if (campaign.isActive() && !dto.isActive()) {
+            events.publishEvent(new CampaignClosed(campaign.getId()));
+        }
         campaign.setTitle(dto.getTitle());
         campaign.setDescription(dto.getDescription());
         campaign.setStartDate(dto.getStartDate());
         campaign.setEndDate(dto.getEndDate());
         campaign.setActive(dto.isActive());
         campaign.setRequireLogin(dto.isRequireLogin());
+        WebhookService.apply(webhookProps, campaign, dto.getWebhookUrl(), dto.getWebhookEvents());
         return convertToDTO(campaignRepository.save(campaign));
     }
 
@@ -118,6 +141,7 @@ public class CampaignService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only an admin may delete campaigns");
         }
         responseRepository.deleteByCampaignId(campaign.getId());
+        webhookDeliveries.deleteByCampaignId(campaign.getId());
         campaignRepository.delete(campaign);
     }
 
@@ -133,6 +157,9 @@ public class CampaignService {
     @Transactional
     public CampaignDTO setOpen(Long id, boolean open, CurrentUser user) {
         Campaign campaign = load(id, user);
+        if (campaign.isActive() && !open) {
+            events.publishEvent(new CampaignClosed(campaign.getId()));
+        }
         campaign.setActive(open);
         return convertToDTO(campaignRepository.save(campaign));
     }
@@ -257,6 +284,8 @@ public class CampaignService {
         dto.setShareUrl(shareUrl(campaign.getShareToken()));
         dto.setAcceptingResponses(campaign.isAcceptingResponses(LocalDateTime.now()));
         dto.setOwnerName(campaign.getOwnerName());
+        dto.setWebhookUrl(campaign.getWebhookUrl());
+        dto.setWebhookEvents(campaign.getWebhookUrl() == null ? null : WebhookService.events(campaign));
         if (campaign.getId() != null) {
             dto.setResponseCount(responseRepository.countSubmissions(campaign.getId()));
         }

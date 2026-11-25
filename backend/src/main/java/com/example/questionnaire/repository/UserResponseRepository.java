@@ -16,6 +16,7 @@ public interface UserResponseRepository extends JpaRepository<UserResponse, Long
     List<UserResponse> findByUserIdAndQuestionIdOrderBySubmissionDateDesc(String userId, Long questionId);
     List<UserResponse> findByUserIdAndQuestion_Campaign_IdOrderBySubmissionDateDesc(String userId, Long campaignId);
     List<UserResponse> findByQuestion_Campaign_Id(Long campaignId);
+    List<UserResponse> findByUserIdAndQuestion_Campaign_Id(String userId, Long campaignId);
 
     boolean existsByUserIdAndQuestion_Campaign_Id(String userId, Long campaignId);
 
